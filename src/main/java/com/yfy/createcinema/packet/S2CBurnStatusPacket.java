@@ -1,45 +1,32 @@
 package com.yfy.createcinema.packet;
 
 import com.yfy.createcinema.client.network.ClientPacketHandlers;
-import com.yfy.createcinema.CreateCinema;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraftforge.network.NetworkEvent;
 
-public record S2CBurnStatusPacket(BlockPos burnerPos, String message, float progress, boolean active) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<S2CBurnStatusPacket> TYPE =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(CreateCinema.MODID, "burn_status"));
+import java.util.function.Supplier;
 
-    public static final StreamCodec<RegistryFriendlyByteBuf, S2CBurnStatusPacket> STREAM_CODEC = new StreamCodec<>() {
-        @Override
-        public S2CBurnStatusPacket decode(RegistryFriendlyByteBuf buf) {
-            return new S2CBurnStatusPacket(BlockPos.STREAM_CODEC.decode(buf), buf.readUtf(), buf.readFloat(), buf.readBoolean());
-        }
+public record S2CBurnStatusPacket(BlockPos burnerPos, String message, float progress, boolean active) {
 
-        @Override
-        public void encode(RegistryFriendlyByteBuf buf, S2CBurnStatusPacket packet) {
-            BlockPos.STREAM_CODEC.encode(buf, packet.burnerPos);
-            buf.writeUtf(packet.message);
-            buf.writeFloat(packet.progress);
-            buf.writeBoolean(packet.active);
-        }
-    };
+    public static void encode(S2CBurnStatusPacket packet, FriendlyByteBuf buf) {
+        buf.writeBlockPos(packet.burnerPos);
+        buf.writeUtf(packet.message);
+        buf.writeFloat(packet.progress);
+        buf.writeBoolean(packet.active);
+    }
 
-    @Override
-    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
-        return TYPE;
+    public static S2CBurnStatusPacket decode(FriendlyByteBuf buf) {
+        return new S2CBurnStatusPacket(buf.readBlockPos(), buf.readUtf(), buf.readFloat(), buf.readBoolean());
     }
 
     public void sendTo(ServerPlayer player) {
-        PacketDistributor.sendToPlayer(player, this);
+        ModNetwork.sendToPlayer(player, this);
     }
 
-    public void handle(IPayloadContext ctx) {
-        ctx.enqueueWork(() -> com.yfy.createcinema.client.network.ClientPacketHandlers.handleBurnStatus(this));
+    public static void handle(S2CBurnStatusPacket packet, Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() -> ClientPacketHandlers.handleBurnStatus(packet));
+        ctx.get().setPacketHandled(true);
     }
 }

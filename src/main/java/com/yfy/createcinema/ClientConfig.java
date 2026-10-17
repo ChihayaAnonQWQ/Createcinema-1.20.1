@@ -1,34 +1,34 @@
 package com.yfy.createcinema;
 
 import com.yfy.createcinema.client.browser.PlatformInfo;
-import net.neoforged.neoforge.common.ModConfigSpec;
+import net.minecraftforge.common.ForgeConfigSpec;
 
 public final class ClientConfig {
-    public static final ModConfigSpec SPEC;
-    private static final ModConfigSpec.ConfigValue<String> LEGACY_DOUYIN_COOKIE;
-    private static final ModConfigSpec.BooleanValue DOUYIN_BROWSER_AUTHORIZATION;
-    private static final ModConfigSpec.BooleanValue IQIYI_BROWSER_AUTHORIZATION;
-    private static final ModConfigSpec.IntValue SCREEN_MAX_WIDTH;
-    private static final ModConfigSpec.IntValue SCREEN_MAX_HEIGHT;
-    private static final ModConfigSpec.IntValue SCREEN_ANCHOR_RADIUS;
-    private static final ModConfigSpec.IntValue SCREEN_MAX_DISTANCE;
-    private static final ModConfigSpec.DoubleValue SPEAKER_CLUSTER_DISTANCE;
-    private static final ModConfigSpec.IntValue SPEAKER_ATTENUATION_DISTANCE;
-    private static final ModConfigSpec.BooleanValue BURN_CACHE_ENABLED;
-    private static final ModConfigSpec.IntValue BURN_CACHE_MAX_GIB;
-    private static final ModConfigSpec.BooleanValue BURN_HARDWARE_DECODING;
-    private static final ModConfigSpec.BooleanValue BURN_HARDWARE_ENCODING;
-    private static final ModConfigSpec.BooleanValue PROJECTOR_HARDWARE_DECODING;
-    private static final ModConfigSpec.ConfigValue<String> BILIBILI_SESSDATA;
-    private static final ModConfigSpec.ConfigValue<String> BILIBILI_BILL_JCT;
-    private static final ModConfigSpec.ConfigValue<String> BILIBILI_BUVID3;
-    private static final ModConfigSpec.ConfigValue<String> BILIBILI_BROWSER_COOKIES;
-    private static final ModConfigSpec.ConfigValue<String> BILIBILI_REFRESH_TOKEN;
-    private static final ModConfigSpec.IntValue BILIBILI_VIP_QUALITY;
+    public static final ForgeConfigSpec SPEC;
+    private static final ForgeConfigSpec.ConfigValue<String> LEGACY_DOUYIN_COOKIE;
+    private static final ForgeConfigSpec.BooleanValue DOUYIN_BROWSER_AUTHORIZATION;
+    private static final ForgeConfigSpec.BooleanValue IQIYI_BROWSER_AUTHORIZATION;
+    private static final ForgeConfigSpec.IntValue SCREEN_MAX_WIDTH;
+    private static final ForgeConfigSpec.IntValue SCREEN_MAX_HEIGHT;
+    private static final ForgeConfigSpec.IntValue SCREEN_ANCHOR_RADIUS;
+    private static final ForgeConfigSpec.IntValue SCREEN_MAX_DISTANCE;
+    private static final ForgeConfigSpec.DoubleValue SPEAKER_CLUSTER_DISTANCE;
+    private static final ForgeConfigSpec.IntValue SPEAKER_ATTENUATION_DISTANCE;
+    private static final ForgeConfigSpec.BooleanValue BURN_CACHE_ENABLED;
+    private static final ForgeConfigSpec.IntValue BURN_CACHE_MAX_GIB;
+    private static final ForgeConfigSpec.BooleanValue BURN_HARDWARE_DECODING;
+    private static final ForgeConfigSpec.BooleanValue BURN_HARDWARE_ENCODING;
+    private static final ForgeConfigSpec.BooleanValue PROJECTOR_HARDWARE_DECODING;
+    private static final ForgeConfigSpec.ConfigValue<String> BILIBILI_SESSDATA;
+    private static final ForgeConfigSpec.ConfigValue<String> BILIBILI_BILL_JCT;
+    private static final ForgeConfigSpec.ConfigValue<String> BILIBILI_BUVID3;
+    private static final ForgeConfigSpec.ConfigValue<String> BILIBILI_BROWSER_COOKIES;
+    private static final ForgeConfigSpec.ConfigValue<String> BILIBILI_REFRESH_TOKEN;
+    private static final ForgeConfigSpec.IntValue BILIBILI_VIP_QUALITY;
     private static volatile java.util.function.Consumer<String> browserShutdown = provider -> { };
 
     static {
-        ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
+        ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
         builder.push("douyin");
         LEGACY_DOUYIN_COOKIE = builder
                 .comment("Plaintext Douyin cookies used as a login fallback where no visible browser ",
@@ -133,7 +133,7 @@ public final class ClientConfig {
         setBrowserAuthorization(IQIYI_BROWSER_AUTHORIZATION, "iqiyi", enabled);
     }
 
-    private static void setBrowserAuthorization(ModConfigSpec.BooleanValue setting, String provider, boolean enabled) {
+    private static void setBrowserAuthorization(ForgeConfigSpec.BooleanValue setting, String provider, boolean enabled) {
         boolean wasEnabled = setting.get();
         setting.set(enabled);
         setting.save();
@@ -271,7 +271,7 @@ public final class ClientConfig {
         BILIBILI_VIP_QUALITY.save();
     }
 
-    private static void setBilibiliString(ModConfigSpec.ConfigValue<String> setting, String value) {
+    private static void setBilibiliString(ForgeConfigSpec.ConfigValue<String> setting, String value) {
         setting.set(value == null ? "" : value);
         setting.save();
     }

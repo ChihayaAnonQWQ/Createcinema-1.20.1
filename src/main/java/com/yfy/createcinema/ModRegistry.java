@@ -21,7 +21,6 @@ import com.yfy.createcinema.item.DisplayUpgradeItem;
 import com.yfy.createcinema.item.RemoteControlUpgradeItem;
 import com.yfy.createcinema.item.TooltipBlockItem;
 import com.yfy.createcinema.film.MediaType;
-import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.MenuType;
@@ -29,95 +28,88 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
-import net.neoforged.neoforge.registries.DeferredBlock;
-import net.neoforged.neoforge.registries.DeferredItem;
-import net.neoforged.neoforge.registries.DeferredHolder;
-import net.neoforged.neoforge.registries.DeferredRegister;
+import net.minecraftforge.common.extensions.IForgeMenuType;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 
-import java.util.Set;
 import java.util.function.Supplier;
 
 public class ModRegistry {
-    public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(CreateCinema.MODID);
-    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(CreateCinema.MODID);
-    public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, CreateCinema.MODID);
-    public static final DeferredRegister<MenuType<?>> MENU_TYPES = DeferredRegister.create(Registries.MENU, CreateCinema.MODID);
+    public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, CreateCinema.MODID);
+    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, CreateCinema.MODID);
+    public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, CreateCinema.MODID);
+    public static final DeferredRegister<MenuType<?>> MENU_TYPES = DeferredRegister.create(ForgeRegistries.MENU_TYPES, CreateCinema.MODID);
     public static final DeferredRegister<CreativeModeTab> CREATIVE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, CreateCinema.MODID);
-    public static final DeferredRegister.DataComponents DATA_COMPONENTS =
-            DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, CreateCinema.MODID);
 
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemContainerContents>> REMOTE_FREQUENCIES =
-            DATA_COMPONENTS.registerComponentType("remote_frequencies", builder -> builder
-                    .persistent(ItemContainerContents.CODEC)
-                    .networkSynchronized(ItemContainerContents.STREAM_CODEC));
-
-    public static final DeferredItem<FilmItem> FILM = ITEMS.register("film", () -> new FilmItem(new Item.Properties().stacksTo(1)));
-    public static final DeferredItem<FilmItem> BLANK_IMAGE = ITEMS.register("blank_image",
+    public static final RegistryObject<FilmItem> FILM = ITEMS.register("film", () -> new FilmItem(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<FilmItem> BLANK_IMAGE = ITEMS.register("blank_image",
             () -> new FilmItem(new Item.Properties().stacksTo(1), MediaType.IMAGE));
-    public static final DeferredItem<FilmItem> BLANK_ALBUM = ITEMS.register("blank_album",
+    public static final RegistryObject<FilmItem> BLANK_ALBUM = ITEMS.register("blank_album",
             () -> new FilmItem(new Item.Properties().stacksTo(1), MediaType.ALBUM));
-    public static final DeferredItem<FilmItem> BLANK_SLIDES = ITEMS.register("blank_slides",
+    public static final RegistryObject<FilmItem> BLANK_SLIDES = ITEMS.register("blank_slides",
             () -> new FilmItem(new Item.Properties().stacksTo(1), MediaType.SLIDES));
-    public static final DeferredItem<ContinuousPlayUpgradeItem> CONTINUOUS_PLAY_UPGRADE = ITEMS.register("continuous_play_upgrade",
+    public static final RegistryObject<ContinuousPlayUpgradeItem> CONTINUOUS_PLAY_UPGRADE = ITEMS.register("continuous_play_upgrade",
             () -> new ContinuousPlayUpgradeItem(new Item.Properties().stacksTo(1)));
-    public static final DeferredItem<RemoteControlUpgradeItem> REMOTE_CONTROL_UPGRADE = ITEMS.register("remote_control_upgrade",
+    public static final RegistryObject<RemoteControlUpgradeItem> REMOTE_CONTROL_UPGRADE = ITEMS.register("remote_control_upgrade",
             () -> new RemoteControlUpgradeItem(new Item.Properties().stacksTo(1)));
-    public static final DeferredItem<ConfigManagerItem> CONFIG_MANAGER = ITEMS.register("config_manager",
+    public static final RegistryObject<ConfigManagerItem> CONFIG_MANAGER = ITEMS.register("config_manager",
             () -> new ConfigManagerItem(new Item.Properties().stacksTo(1)));
-    public static final DeferredItem<DisplayUpgradeItem> DISPLAY_UPGRADE = ITEMS.register("display_upgrade",
+    public static final RegistryObject<DisplayUpgradeItem> DISPLAY_UPGRADE = ITEMS.register("display_upgrade",
             () -> new DisplayUpgradeItem(new Item.Properties().stacksTo(1)));
 
-    public static final DeferredBlock<BurnerBlock> BURNER = BLOCKS.register("burner",
+    public static final RegistryObject<BurnerBlock> BURNER = BLOCKS.register("burner",
             () -> new BurnerBlock(BlockBehaviour.Properties.of().strength(3.5f).requiresCorrectToolForDrops()));
-    public static final DeferredBlock<ScreenBlock> SCREEN = BLOCKS.register("screen",
+    public static final RegistryObject<ScreenBlock> SCREEN = BLOCKS.register("screen",
             () -> new ScreenBlock(BlockBehaviour.Properties.of().strength(1.0f).noOcclusion()));
-    public static final DeferredBlock<ScreenBlock> BLACK_SCREEN = BLOCKS.register("black_screen",
+    public static final RegistryObject<ScreenBlock> BLACK_SCREEN = BLOCKS.register("black_screen",
             () -> new ScreenBlock(BlockBehaviour.Properties.of().strength(1.0f).noOcclusion()));
-    public static final DeferredBlock<ProjectorBlock> PROJECTOR = BLOCKS.register("projector",
+    public static final RegistryObject<ProjectorBlock> PROJECTOR = BLOCKS.register("projector",
             () -> new ProjectorBlock(BlockBehaviour.Properties.of().strength(3.5f).requiresCorrectToolForDrops().noOcclusion()));
-    public static final DeferredBlock<SpeakerBlock> SPEAKER = BLOCKS.register("speaker",
+    public static final RegistryObject<SpeakerBlock> SPEAKER = BLOCKS.register("speaker",
             () -> new SpeakerBlock(BlockBehaviour.Properties.of().strength(2.0f).requiresCorrectToolForDrops().noOcclusion()));
-    public static final DeferredBlock<CableBlock> CABLE = BLOCKS.register("cable",
+    public static final RegistryObject<CableBlock> CABLE = BLOCKS.register("cable",
             () -> new CableBlock(BlockBehaviour.Properties.of().strength(0.6f).noOcclusion()));
-    public static final DeferredBlock<NetworkProjectorBlock> NETWORK_PROJECTOR = BLOCKS.register("network_projector",
+    public static final RegistryObject<NetworkProjectorBlock> NETWORK_PROJECTOR = BLOCKS.register("network_projector",
             () -> new NetworkProjectorBlock(BlockBehaviour.Properties.of().strength(3.5f).requiresCorrectToolForDrops().noOcclusion()));
-    public static final DeferredBlock<WrenchableBlock> DARKROOM_BLOCK = BLOCKS.register("darkroom_block",
+    public static final RegistryObject<WrenchableBlock> DARKROOM_BLOCK = BLOCKS.register("darkroom_block",
             () -> new WrenchableBlock(BlockBehaviour.Properties.of().strength(2.5f).requiresCorrectToolForDrops()));
 
-    public static final DeferredItem<BlockItem> BURNER_ITEM = ITEMS.registerSimpleBlockItem(BURNER);
-    public static final DeferredItem<BlockItem> SCREEN_ITEM = ITEMS.register("screen",
+    public static final RegistryObject<BlockItem> BURNER_ITEM = ITEMS.register("burner",
+            () -> new BlockItem(BURNER.get(), new Item.Properties()));
+    public static final RegistryObject<BlockItem> SCREEN_ITEM = ITEMS.register("screen",
             () -> new TooltipBlockItem(SCREEN.get(), new Item.Properties(), "tooltip.createcinema.screen", 2));
-    public static final DeferredItem<BlockItem> BLACK_SCREEN_ITEM = ITEMS.register("black_screen",
+    public static final RegistryObject<BlockItem> BLACK_SCREEN_ITEM = ITEMS.register("black_screen",
             () -> new TooltipBlockItem(BLACK_SCREEN.get(), new Item.Properties(), "tooltip.createcinema.black_screen", 2));
-    public static final DeferredItem<BlockItem> PROJECTOR_ITEM = ITEMS.registerSimpleBlockItem(PROJECTOR);
-    public static final DeferredItem<BlockItem> SPEAKER_ITEM = ITEMS.register("speaker",
+    public static final RegistryObject<BlockItem> PROJECTOR_ITEM = ITEMS.register("projector",
+            () -> new BlockItem(PROJECTOR.get(), new Item.Properties()));
+    public static final RegistryObject<BlockItem> SPEAKER_ITEM = ITEMS.register("speaker",
             () -> new TooltipBlockItem(SPEAKER.get(), new Item.Properties(), "tooltip.createcinema.speaker", 2));
-    public static final DeferredItem<BlockItem> CABLE_ITEM = ITEMS.register("cable",
+    public static final RegistryObject<BlockItem> CABLE_ITEM = ITEMS.register("cable",
             () -> new TooltipBlockItem(CABLE.get(), new Item.Properties(), "tooltip.createcinema.cable", 2));
-    public static final DeferredItem<BlockItem> NETWORK_PROJECTOR_ITEM = ITEMS.registerSimpleBlockItem(NETWORK_PROJECTOR);
-    public static final DeferredItem<BlockItem> DARKROOM_BLOCK_ITEM = ITEMS.register("darkroom_block",
+    public static final RegistryObject<BlockItem> NETWORK_PROJECTOR_ITEM = ITEMS.register("network_projector",
+            () -> new BlockItem(NETWORK_PROJECTOR.get(), new Item.Properties()));
+    public static final RegistryObject<BlockItem> DARKROOM_BLOCK_ITEM = ITEMS.register("darkroom_block",
             () -> new TooltipBlockItem(DARKROOM_BLOCK.get(), new Item.Properties(), "tooltip.createcinema.darkroom_block", 2));
 
     public static final Supplier<BlockEntityType<BurnerBlockEntity>> BURNER_BE = BLOCK_ENTITIES.register("burner",
-            () -> new BlockEntityType<>(BurnerBlockEntity::new, Set.of(BURNER.get()), null));
+            () -> BlockEntityType.Builder.of(BurnerBlockEntity::new, BURNER.get()).build(null));
     public static final Supplier<BlockEntityType<ProjectorBlockEntity>> PROJECTOR_BE = BLOCK_ENTITIES.register("projector",
-            () -> new BlockEntityType<>(ProjectorBlockEntity::new, Set.of(PROJECTOR.get()), null));
+            () -> BlockEntityType.Builder.of(ProjectorBlockEntity::new, PROJECTOR.get()).build(null));
     public static final Supplier<BlockEntityType<NetworkProjectorBlockEntity>> NETWORK_PROJECTOR_BE = BLOCK_ENTITIES.register("network_projector",
-            () -> new BlockEntityType<>(NetworkProjectorBlockEntity::new, Set.of(NETWORK_PROJECTOR.get()), null));
+            () -> BlockEntityType.Builder.of(NetworkProjectorBlockEntity::new, NETWORK_PROJECTOR.get()).build(null));
 
     public static final Supplier<MenuType<BurnerMenu>> BURNER_MENU = MENU_TYPES.register("burner",
-            () -> IMenuTypeExtension.create((windowId, inv, data) -> new BurnerMenu(windowId, inv, data.readBlockPos())));
+            () -> IForgeMenuType.create((windowId, inv, data) -> new BurnerMenu(windowId, inv, data.readBlockPos())));
     public static final Supplier<MenuType<ProjectorMenu>> PROJECTOR_MENU = MENU_TYPES.register("projector",
-            () -> IMenuTypeExtension.create((windowId, inv, data) -> new ProjectorMenu(windowId, inv, data.readBlockPos())));
+            () -> IForgeMenuType.create((windowId, inv, data) -> new ProjectorMenu(windowId, inv, data.readBlockPos())));
     public static final Supplier<MenuType<NetworkProjectorMenu>> NETWORK_PROJECTOR_MENU = MENU_TYPES.register("network_projector",
-            () -> IMenuTypeExtension.create((windowId, inv, data) -> new NetworkProjectorMenu(windowId, inv, data.readBlockPos())));
+            () -> IForgeMenuType.create((windowId, inv, data) -> new NetworkProjectorMenu(windowId, inv, data.readBlockPos())));
     public static final Supplier<MenuType<RemoteControlUpgradeMenu>> REMOTE_CONTROL_UPGRADE_MENU = MENU_TYPES.register("remote_control_upgrade",
-            () -> IMenuTypeExtension.create((windowId, inv, data) -> new RemoteControlUpgradeMenu(windowId, inv, data)));
+            () -> IForgeMenuType.create((windowId, inv, data) -> new RemoteControlUpgradeMenu(windowId, inv, data)));
 
     public static final Supplier<CreativeModeTab> CREATIVE_TAB = CREATIVE_TABS.register("createcinema",
             () -> CreativeModeTab.builder()

@@ -50,7 +50,7 @@ public final class PlatformInfo {
     }
 
     /** JavaCPP-style platform classifier for the current runtime (used at build time too). */
-    static String javacppPlatform() {
+    public static String javacppPlatform() {
         return switch (OS) {
             case WINDOWS -> isArm64() ? "windows-arm64" : "windows-x86_64";
             case MACOS -> isArm64() ? "macosx-arm64" : "macosx-x86_64";

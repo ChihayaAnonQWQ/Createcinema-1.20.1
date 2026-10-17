@@ -1,205 +1,219 @@
 plugins {
-    id 'java-library'
-    id 'maven-publish'
-    id 'net.neoforged.moddev' version '2.0.141'
+    id 'eclipse'
     id 'idea'
+    id 'maven-publish'
+    id 'net.minecraftforge.gradle' version '6.0.24'
+    id 'org.spongepowered.mixin' version '0.7.38'
 }
 
 version = mod_version
 group = mod_group_id
 
-sourceSets.main.resources {
-    srcDir('src/generated/resources')
-    exclude("**/*.bbmodel")
-    exclude("src/generated/**/.cache")
-}
-
-sourceSets {
-    androidBridge {
-        java {
-            srcDir('src/androidBridge/java')
-        }
-    }
-    poiBridge {
-        java {
-            srcDir('src/poiBridge/java')
-        }
-    }
-}
-
-repositories {
-    mavenCentral()
-    maven { url = "https://maven.createmod.net" }
-    maven { url = "https://maven.ithundxr.dev/snapshots" }
-    maven { url = "https://maven.blamejared.com" }
-    maven { url = "https://api.modrinth.com/maven" }
-    maven { url = "https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/" }
-}
+ext.bundledPlatforms = (project.findProperty('bundled_platforms') ?: 'windows-x86_64')
+        .toString().split(',').collect { it.trim() }.findAll { !it.isEmpty() }
 
 base {
     archivesName = mod_id
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
-
-neoForge {
-    version = project.neo_version
-    accessTransformers = project.files('src/main/resources/META-INF/accesstransformer.cfg')
-
-    parchment {
-        mappingsVersion = project.parchment_mappings_version
-        minecraftVersion = project.parchment_minecraft_version
-    }
+minecraft {
+    mappings channel: 'official', version: minecraft_version
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+    copyIdeResources = true
 
     runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            property 'forge.enabledGameTestNamespaces', mod_id
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                }
+            }
+        }
         client {
-            client()
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            property 'forge.enabledGameTestNamespaces', mod_id
         }
         server {
-            server()
-            programArgument '--nogui'
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            property 'forge.enabledGameTestNamespaces', mod_id
+            args '--nogui'
         }
         gameTestServer {
-            type = "gameTestServer"
+            property 'forge.enabledGameTestNamespaces', mod_id
         }
         data {
-            data()
-            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
-        }
-        configureEach {
-            systemProperty 'forge.logging.markers', 'REGISTRIES'
-            logLevel = org.slf4j.event.Level.DEBUG
+            workingDirectory project.file('run')
+            args '--mod', mod_id, '--all',
+                 '--output', file('src/generated/resources/').getAbsolutePath(),
+                 '--existing', file('src/main/resources/').getAbsolutePath()
         }
     }
+}
 
-    mods {
-        "${mod_id}" {
-            sourceSet(sourceSets.main)
-        }
+sourceSets.main.resources {
+    srcDir('src/generated/resources')
+}
+
+sourceSets {
+    poiBridge {
+        java { srcDir 'src/poiBridge/java' }
     }
+    androidBridge {
+        java { srcDir 'src/androidBridge/java' }
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://maven.minecraftforge.net/' }
+    maven { url = 'https://maven.createmod.net' }
+    maven { url = 'https://maven.tterrag.com/' }
+    maven { url = 'https://maven.blamejared.com' }
+    maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+}
+
+mixin {
+    add sourceSets.main, "${mod_id}.refmap.json"
+    config "${mod_id}.mixins.json"
 }
 
 configurations {
-    runtimeClasspath.extendsFrom localRuntime
-    javacvRaw
     bytedecoBundle
 }
 
-def currentOs = System.getProperty("os.name").toLowerCase(Locale.ROOT)
-def currentArch = System.getProperty("os.arch").toLowerCase(Locale.ROOT)
-def arm64 = currentArch.contains("aarch64") || currentArch.contains("arm64")
-def bytedecoPlatform = currentOs.contains("win") ? (arm64 ? "windows-arm64" : "windows-x86_64") :
-        currentOs.contains("mac") ? (arm64 ? "macosx-arm64" : "macosx-x86_64") :
-        (arm64 ? "linux-arm64" : "linux-x86_64")
-
-def bundledPlatforms = (project.findProperty('bundled_platforms') ?:
-        'windows-x86_64,linux-x86_64,linux-arm64,macosx-x86_64,macosx-arm64,android-arm64')
-        .toString().split(',').collect { it.trim() }.findAll { !it.isEmpty() }
-
-def strippedJavaCv = tasks.register("strippedJavaCv", Jar) {
-    archiveFileName = "javacv-${javacv_version}-stripped.jar"
-    destinationDirectory = layout.buildDirectory.dir("stripped-libs")
-    from({ configurations.javacvRaw.collect { zipTree(it) } })
-    exclude "module-info.class"
-    exclude "META-INF/versions/*/module-info.class"
-    exclude "META-INF/*.SF", "META-INF/*.RSA", "META-INF/*.DSA"
-    manifest {
-        attributes("Automatic-Module-Name": "org.bytedeco.javacv")
-    }
-}
-
 dependencies {
-    implementation("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") { transitive = false }
-    implementation("net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}")
-    compileOnly("dev.engine-room.flywheel:flywheel-neoforge-api-${minecraft_version}:${flywheel_version}")
-    runtimeOnly("dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}")
-    implementation("com.tterrag.registrate:Registrate:${registrate_version}")
-    compileOnly("mezz.jei:jei-1.21.1-neoforge-api:${jei_version}")
-    if (project.hasProperty("withJei")) {
-        runtimeOnly("mezz.jei:jei-1.21.1-neoforge:${jei_version}")
-    }
-    implementation("org.jsoup:jsoup:1.18.3")
-    additionalRuntimeClasspath("org.jsoup:jsoup:1.18.3")
-    jarJar("org.jsoup:jsoup:1.18.3")
-    poiBridgeImplementation("org.apache.poi:poi-ooxml:5.2.5") {
-        exclude group: "org.apache.logging.log4j"
-    }
-    poiBridgeImplementation("org.apache.poi:poi-scratchpad:5.2.5") {
-        exclude group: "org.apache.logging.log4j"
+    minecraft "net.minecraftforge:forge:${forge_version}"
+
+    implementation fg.deobf("com.simibubi.create:create-${minecraft_version}:${create_version}:slim")
+    compileOnly fg.deobf("dev.engine-room.flywheel:flywheel-forge-${minecraft_version}:${flywheel_version}")
+    runtimeOnly fg.deobf("dev.engine-room.flywheel:flywheel-forge-${minecraft_version}:${flywheel_version}")
+    implementation fg.deobf("net.createmod.ponder:Ponder-Forge-${minecraft_version}:${ponder_version}")
+    implementation fg.deobf("com.tterrag.registrate:Registrate:${registrate_version}")
+
+    compileOnly fg.deobf("mezz.jei:jei-1.20.1-forge-api:${jei_version}")
+    compileOnly fg.deobf("mezz.jei:jei-1.20.1-forge:${jei_version}")
+    runtimeOnly fg.deobf("mezz.jei:jei-1.20.1-forge:${jei_version}")
+
+    compileOnly "org.spongepowered:mixin:0.8.5"
+    annotationProcessor "org.spongepowered:mixin:0.8.5:processor"
+
+    // Dev-runtime only: Create 6.0.8 ships MixinExtras as a nested jar in its release build, which
+    // fg.deobf's slim jar does not carry, so it must be supplied explicitly for the dev runs.
+    runtimeOnly "io.github.llamalad7:mixinextras-forge:0.4.1"
+
+    implementation "org.jsoup:jsoup:1.18.3"
+    implementation "org.bytedeco:javacv:${javacv_version}"
+    implementation "org.bytedeco:ffmpeg:${ffmpeg_version}"
+    implementation "org.bytedeco:javacpp:${javacv_version}"
+
+    bytedecoBundle("org.bytedeco:javacv:${javacv_version}") { transitive = false }
+    bytedecoBundle("org.bytedeco:ffmpeg:${ffmpeg_version}") { transitive = false }
+    bytedecoBundle("org.bytedeco:javacpp:${javacv_version}") { transitive = false }
+    bytedecoBundle("org.jsoup:jsoup:1.18.3") { transitive = false }
+    bundledPlatforms.each { platform ->
+        bytedecoBundle("org.bytedeco:javacpp:${javacv_version}:${platform}") { transitive = false }
+        bytedecoBundle("org.bytedeco:ffmpeg:${ffmpeg_version}:${platform}") { transitive = false }
     }
 
-    javacvRaw("org.bytedeco:javacv:${javacv_version}") { transitive = false }
-    implementation(files(strippedJavaCv))
-    implementation("org.bytedeco:ffmpeg:${ffmpeg_version}")
-    additionalRuntimeClasspath(files(strippedJavaCv))
-    additionalRuntimeClasspath("org.bytedeco:javacpp:${javacv_version}")
-    additionalRuntimeClasspath("org.bytedeco:ffmpeg:${ffmpeg_version}")
-    if (bundledPlatforms.contains(bytedecoPlatform)) {
-        additionalRuntimeClasspath("org.bytedeco:javacpp:${javacv_version}:${bytedecoPlatform}")
-        additionalRuntimeClasspath("org.bytedeco:ffmpeg:${ffmpeg_version}:${bytedecoPlatform}")
+    // PPT/PPTX slide burning support, compiled into its own nested jar (META-INF/createcinema/poi-runtime.jar)
+    // and loaded reflectively by ClientVideoBurner, exactly like the upstream 1.21.1 build does.
+    poiBridgeImplementation('org.apache.poi:poi-ooxml:5.2.5') {
+        exclude group: 'org.apache.logging.log4j'
     }
-
-    bytedecoBundle("org.bytedeco:javacpp:${javacv_version}")
-    bytedecoBundle("org.bytedeco:ffmpeg:${ffmpeg_version}")
-
-    androidBridgeImplementation('com.google.android:android:4.1.1.4')
+    poiBridgeImplementation('org.apache.poi:poi-scratchpad:5.2.5') {
+        exclude group: 'org.apache.logging.log4j'
+    }
+    // Android WebView bridge is compiled against the Android SDK stubs; it is only instantiated on Android.
+    androidBridgeImplementation 'com.google.android:android:4.1.1.4'
 }
 
-def poiRuntimeBundle = tasks.register("poiRuntimeBundle", Jar) {
-    archiveFileName = "poi-runtime.jar"
-    destinationDirectory = layout.buildDirectory.dir("private-libs")
+def poiRuntimeBundle = tasks.register('poiRuntimeBundle', Jar) {
+    archiveFileName = 'poi-runtime.jar'
+    destinationDirectory = layout.buildDirectory.dir('private-libs')
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from sourceSets.poiBridge.output
-    from({ configurations.poiBridgeRuntimeClasspath.collect { zipTree(it) } })
-    exclude "module-info.class"
-    exclude "META-INF/versions/*/module-info.class"
-    exclude "META-INF/*.SF", "META-INF/*.RSA", "META-INF/*.DSA"
-    exclude "org/apache/logging/log4j/**"
+    from({ configurations.poiBridgeRuntimeClasspath.collect { zipTree(it) } }) {
+        exclude 'module-info.class'
+        exclude 'META-INF/versions/*/module-info.class'
+        exclude 'META-INF/*.SF', 'META-INF/*.RSA', 'META-INF/*.DSA'
+        exclude 'org/apache/logging/log4j/**'
+    }
 }
 
-// Gradle collapses multiple Maven classifiers for the same module in one configuration. Keep each
-// target ABI in its own detached configuration so the fat jar always receives every requested native.
-def platformNativeBundles = bundledPlatforms.collect { platform ->
-    def javacppNative = dependencies.create("org.bytedeco:javacpp:${javacv_version}:${platform}")
-    def ffmpegNative = dependencies.create("org.bytedeco:ffmpeg:${ffmpeg_version}:${platform}")
-    javacppNative.transitive = false
-    ffmpegNative.transitive = false
-    configurations.detachedConfiguration(javacppNative, ffmpegNative)
+// Index of every bundled native library, shipped inside the jar so the mod can pre-extract the DLLs itself
+// (see NativeLibraries) instead of racing JavaCPP's write-then-load against virus scanners.
+def nativeIndexFile = layout.buildDirectory.file('generated/native-index/createcinema-natives.txt')
+def generateNativeIndex = tasks.register('generateNativeIndex') {
+    inputs.files(configurations.bytedecoBundle)
+    outputs.file(nativeIndexFile)
+    doLast {
+        def lines = new TreeSet<String>()
+        configurations.bytedecoBundle.files.each { jarFile ->
+            def zip = new java.util.zip.ZipFile(jarFile)
+            try {
+                zip.entries().each { entry ->
+                    def name = entry.name
+                    if (name.endsWith('.dll') || name.endsWith('.so') || name.endsWith('.dylib')) {
+                        lines << (name + ' ' + entry.size)
+                    }
+                }
+            } finally {
+                zip.close()
+            }
+        }
+        def target = nativeIndexFile.get().asFile
+        target.parentFile.mkdirs()
+        target.text = lines.join('\n') + '\n'
+        println "native index entries: " + lines.size()
+    }
 }
 
 tasks.named('jar', Jar).configure {
-    dependsOn strippedJavaCv, poiRuntimeBundle
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    inputs.property("bundledPlatforms", bundledPlatforms)
-    inputs.files(platformNativeBundles)
+    dependsOn poiRuntimeBundle, generateNativeIndex
+    from(nativeIndexFile) { rename { 'createcinema-natives.txt' } }
     from sourceSets.androidBridge.output
-    from({ zipTree(strippedJavaCv.get().archiveFile.get().asFile) }) {
-        exclude "module-info.class"
-        exclude "META-INF/versions/*/module-info.class"
-        exclude "META-INF/*.SF", "META-INF/*.RSA", "META-INF/*.DSA"
+    from(poiRuntimeBundle.flatMap { it.archiveFile }) {
+        into 'META-INF/createcinema'
     }
     from({
-        def artifacts = new ArrayList(configurations.bytedecoBundle.files)
-        platformNativeBundles.each { bundle -> artifacts.addAll(bundle.files) }
-        artifacts.collect { zipTree(it) }
+        configurations.bytedecoBundle.collect { zipTree(it) }
     }) {
-        exclude "module-info.class"
-        exclude "META-INF/versions/*/module-info.class"
-        exclude "META-INF/*.SF", "META-INF/*.RSA", "META-INF/*.DSA"
-    }
-    from(poiRuntimeBundle.flatMap { it.archiveFile }) {
-        into "META-INF/createcinema"
+        exclude 'module-info.class'
+        exclude 'META-INF/versions/*/module-info.class'
+        exclude 'META-INF/*.SF', 'META-INF/*.RSA', 'META-INF/*.DSA', 'META-INF/MANIFEST.MF'
+        exclude 'META-INF/maven/**'
     }
 }
 
-var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 17
+    options.compilerArgs += ['-Xmaxerrs', '3000', '-Xlint:none']
+}
+
+tasks.register('printCompileClasspath') {
+    doLast {
+        file("${buildDir}/compile-classpath.txt").text = sourceSets.main.compileClasspath.asPath
+        println "classpath entries: " + sourceSets.main.compileClasspath.files.size()
+    }
+}
+
+tasks.register('printRuntimeClasspath') {
+    doLast {
+        file("${buildDir}/runtime-classpath.txt").text = sourceSets.main.runtimeClasspath.asPath
+        println "runtime entries: " + sourceSets.main.runtimeClasspath.files.size()
+    }
+}
+
+tasks.named('processResources', ProcessResources).configure {
     var replaceProperties = [
             minecraft_version      : minecraft_version,
             minecraft_version_range: minecraft_version_range,
-            neo_version            : neo_version,
-            neo_version_range      : neo_version_range,
+            forge_version          : forge_version,
+            forge_version_range    : forge_version_range,
             loader_version_range   : loader_version_range,
             mod_id                 : mod_id,
             mod_name               : mod_name,
@@ -209,31 +223,7 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
             mod_description        : mod_description
     ]
     inputs.properties replaceProperties
-    expand replaceProperties
-    from "src/main/templates"
-    into "build/generated/sources/modMetadata"
-}
-sourceSets.main.resources.srcDir generateModMetadata
-neoForge.ideSyncTask generateModMetadata
-
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8'
-}
-
-publishing {
-    publications {
-        register('mavenJava', MavenPublication) {
-            from components.java
-        }
-    }
-    repositories {
-        maven { url "file://${project.projectDir}/repo" }
-    }
-}
-
-idea {
-    module {
-        downloadSources = true
-        downloadJavadoc = true
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand replaceProperties
     }
 }

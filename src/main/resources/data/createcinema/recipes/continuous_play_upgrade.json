@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "RPR",
+    "PCP",
+    "RPR"
+  ],
+  "key": {
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "P": {
+      "item": "minecraft:paper"
+    },
+    "C": {
+      "item": "minecraft:comparator"
+    }
+  },
+  "result": {
+    "count": 1,
+    "item": "createcinema:continuous_play_upgrade"
+  }
+}

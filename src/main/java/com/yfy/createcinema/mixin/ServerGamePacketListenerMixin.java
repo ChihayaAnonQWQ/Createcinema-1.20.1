@@ -21,10 +21,10 @@ public abstract class ServerGamePacketListenerMixin {
     @Inject(method = "handleSetCreativeModeSlot", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/server/level/ServerLevel;)V", shift = At.Shift.AFTER))
     private void createcinema$assignCreativeCopyId(ServerboundSetCreativeModeSlotPacket packet, CallbackInfo ci) {
         if (!player.gameMode.isCreative()) return;
-        ItemStack stack = packet.itemStack();
+        ItemStack stack = packet.getItem();
         if (!(stack.getItem() instanceof FilmItem) || FilmItem.getFilmId(stack).isBlank()) return;
 
-        int slot = packet.slotNum();
+        int slot = packet.getSlotNum();
         String copyId = FilmItem.getCopyId(stack);
         FilmReferenceData references = FilmReferenceData.get(player.server);
         if (slot < 0) {

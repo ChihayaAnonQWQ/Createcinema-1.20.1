@@ -34,7 +34,6 @@ import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
@@ -46,11 +45,6 @@ public class ProjectorRenderer<T extends com.simibubi.create.content.kinetics.ba
     private final Map<String, CachedScreen> screenCache = new HashMap<>();
 
     public ProjectorRenderer(BlockEntityRendererProvider.Context context) {
-    }
-
-    @Override
-    public AABB getRenderBoundingBox(T be) {
-        return be.getRenderBoundingBox();
     }
 
     @Override
@@ -472,17 +466,19 @@ public class ProjectorRenderer<T extends com.simibubi.create.content.kinetics.ba
     }
 
     private static void colorVertex(VertexConsumer consumer, Matrix4f matrix, Vec3 point, int red, int green, int blue, int alpha) {
-        consumer.addVertex(matrix, (float) point.x, (float) point.y, (float) point.z).setColor(red, green, blue, alpha);
+        consumer.vertex(matrix, (float) point.x, (float) point.y, (float) point.z)
+                .color(red, green, blue, alpha).endVertex();
     }
 
     private static void texturedVertex(VertexConsumer consumer, Matrix4f matrix, Vec3 point, float u, float v,
                                        Direction normal, int light, int tint) {
-        consumer.addVertex(matrix, (float) point.x, (float) point.y, (float) point.z)
-                .setColor(tint, tint, tint, 255)
-                .setUv(u, v)
-                .setOverlay(OverlayTexture.NO_OVERLAY)
-                .setLight(light)
-                .setNormal(normal.getStepX(), normal.getStepY(), normal.getStepZ());
+        consumer.vertex(matrix, (float) point.x, (float) point.y, (float) point.z)
+                .color(tint, tint, tint, 255)
+                .uv(u, v)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(light)
+                .normal(normal.getStepX(), normal.getStepY(), normal.getStepZ())
+                .endVertex();
     }
 
     private record ScreenRect(BlockPos anchor, Direction horizontal, int minHorizontal, int maxHorizontal,

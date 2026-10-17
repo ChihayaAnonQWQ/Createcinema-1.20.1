@@ -7,7 +7,6 @@ import com.yfy.createcinema.film.FilmLifecycle;
 import com.yfy.createcinema.film.MediaType;
 import com.yfy.createcinema.packet.S2CBurnStatusPacket;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
@@ -163,27 +162,27 @@ public class BurnerBlockEntity extends BlockEntity implements Container {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
+    protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
         if (!film.isEmpty()) {
-            tag.put("Film", film.saveOptional(registries));
+            tag.put("Film", film.save(new CompoundTag()));
         }
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
+    public void load(CompoundTag tag) {
+        super.load(tag);
         if (tag.contains("Film")) {
-            film = ItemStack.parseOptional(registries, tag.getCompound("Film"));
+            film = ItemStack.of(tag.getCompound("Film"));
         } else {
             film = ItemStack.EMPTY;
         }
     }
 
     @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        CompoundTag tag = super.getUpdateTag(registries);
-        saveAdditional(tag, registries);
+    public CompoundTag getUpdateTag() {
+        CompoundTag tag = super.getUpdateTag();
+        saveAdditional(tag);
         return tag;
     }
 

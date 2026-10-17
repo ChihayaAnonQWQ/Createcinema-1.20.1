@@ -1,6 +1,5 @@
 package com.yfy.createcinema.block;
 
-import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.content.decoration.encasing.CasingBlock;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
@@ -12,7 +11,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -33,7 +31,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class CableBlock extends PipeBlock implements IWrenchable {
-    public static final MapCodec<CableBlock> CODEC = simpleCodec(CableBlock::new);
+    // 1.20.1 has no block codec (MapCodec / simpleCodec arrived in 1.20.5), so no CODEC field.
     public static final EnumProperty<CasingType> CASING = EnumProperty.create("casing", CasingType.class);
 
     public CableBlock(Properties properties) {
@@ -43,11 +41,6 @@ public class CableBlock extends PipeBlock implements IWrenchable {
             state = state.setValue(PROPERTY_BY_DIRECTION.get(direction), false);
         }
         registerDefaultState(state.setValue(CASING, CasingType.NONE));
-    }
-
-    @Override
-    protected MapCodec<? extends PipeBlock> codec() {
-        return CODEC;
     }
 
     @Override
@@ -61,25 +54,26 @@ public class CableBlock extends PipeBlock implements IWrenchable {
     }
 
     @Override
-    protected BlockState updateShape(BlockState state, Direction direction, BlockState neighborState,
-                                     LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
+    public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState,
+                                  LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
         ClientCableIndex.onBlockChanged(level, pos);
         return state.setValue(PROPERTY_BY_DIRECTION.get(direction), connectsTo(neighborState));
     }
 
     @Override
-    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
-                                              Player player, InteractionHand hand, BlockHitResult hitResult) {
-        if (player.isShiftKeyDown() || !player.mayBuild()) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player,
+                                 InteractionHand hand, BlockHitResult hitResult) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (player.isShiftKeyDown() || !player.mayBuild()) return InteractionResult.PASS;
         CasingType casing = casingTypeOf(stack);
-        if (casing == null) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-        if (level.isClientSide) return ItemInteractionResult.SUCCESS;
+        if (casing == null) return InteractionResult.PASS;
+        if (level.isClientSide) return InteractionResult.SUCCESS;
         BlockState encased = state.setValue(CASING, casing);
         level.setBlock(pos, encased, 3);
         SoundType soundType = encased.getSoundType();
         level.playSound(null, pos, soundType.getPlaceSound(), SoundSource.BLOCKS,
                 (soundType.getVolume() + 1.0f) / 2.0f, soundType.getPitch() * 0.8f);
-        return ItemInteractionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 
     @Override

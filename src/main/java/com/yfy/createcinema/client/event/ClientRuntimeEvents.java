@@ -10,19 +10,20 @@ import com.yfy.createcinema.client.film.ClientFilmVideoStreams;
 import com.yfy.createcinema.client.network.ClientCableIndex;
 import com.yfy.createcinema.CreateCinema;
 import com.yfy.createcinema.blockentity.NetworkProjectorBlockEntity;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.sound.PlayStreamingSourceEvent;
-import net.neoforged.neoforge.event.GameShuttingDownEvent;
-import net.neoforged.neoforge.event.level.ChunkEvent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.client.event.sound.PlayStreamingSourceEvent;
+import net.minecraftforge.event.GameShuttingDownEvent;
+import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraft.world.level.chunk.LevelChunk;
-@EventBusSubscriber(modid = CreateCinema.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
+@Mod.EventBusSubscriber(modid = CreateCinema.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ClientRuntimeEvents {
     private static Object activeLevel;
-    @SubscribeEvent public static void clientTick(ClientTickEvent.Post event) {
+    @SubscribeEvent public static void clientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) return;
         Object level = net.minecraft.client.Minecraft.getInstance().level;
         if (level != activeLevel) {
             clearPlayback();

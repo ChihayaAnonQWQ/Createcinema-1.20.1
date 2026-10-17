@@ -8,14 +8,14 @@ import com.yfy.createcinema.ModRegistry;
 import net.minecraft.core.registries.Registries;
 
 public final class CinemaDisplaySources {
-    private static final RegistryEntry<DisplaySource, ProjectorDisplaySource> PROJECTOR_STATUS = CreateCinema.REGISTRATE
+    private static final RegistryEntry<ProjectorDisplaySource> PROJECTOR_STATUS = CreateCinema.REGISTRATE
             .displaySource("projector_status", ProjectorDisplaySource::new)
             .onRegisterAfter(Registries.BLOCK_ENTITY_TYPE, source -> {
                 DisplaySource.BY_BLOCK_ENTITY.add(ModRegistry.PROJECTOR_BE.get(), source);
                 DisplaySource.BY_BLOCK_ENTITY.add(ModRegistry.NETWORK_PROJECTOR_BE.get(), source);
             })
             .register();
-    private static final RegistryEntry<DisplayTarget, ProjectorDisplayTarget> PROJECTOR_OUTPUT = CreateCinema.REGISTRATE
+    private static final RegistryEntry<ProjectorDisplayTarget> PROJECTOR_OUTPUT = CreateCinema.REGISTRATE
             .displayTarget("projector", ProjectorDisplayTarget::new)
             .onRegisterAfter(Registries.BLOCK_ENTITY_TYPE, target ->
                     DisplayTarget.BY_BLOCK_ENTITY.register(ModRegistry.PROJECTOR_BE.get(), target))

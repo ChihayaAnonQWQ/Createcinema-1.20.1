@@ -5,7 +5,7 @@ import com.yfy.createcinema.ModRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
@@ -48,22 +48,22 @@ public class ScreenBlock extends Block implements IWrenchable {
     }
 
     @Override
-    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return shape(state);
     }
 
     @Override
-    protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return shape(state);
     }
 
     @Override
-    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, net.minecraft.world.level.Level level,
-                                              BlockPos pos, Player player, InteractionHand hand,
-                                              net.minecraft.world.phys.BlockHitResult hitResult) {
-        if (player.isShiftKeyDown()) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+    public InteractionResult use(BlockState state, net.minecraft.world.level.Level level, BlockPos pos,
+                                 Player player, InteractionHand hand, net.minecraft.world.phys.BlockHitResult hitResult) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (player.isShiftKeyDown()) return InteractionResult.PASS;
         IPlacementHelper helper = PlacementHelpers.get(PLACEMENT_HELPER_ID);
-        if (!helper.matchesItem(stack)) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        if (!helper.matchesItem(stack)) return InteractionResult.PASS;
         return helper.getOffset(player, level, state, pos, hitResult)
                 .placeInWorld(level, (net.minecraft.world.item.BlockItem) stack.getItem(), player, hand, hitResult);
     }

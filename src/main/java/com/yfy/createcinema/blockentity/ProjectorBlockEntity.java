@@ -14,7 +14,6 @@ import com.yfy.createcinema.item.FilmItem;
 import com.yfy.createcinema.item.RemoteControlUpgradeItem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -29,7 +28,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.items.ItemStackHandler;
+import net.minecraftforge.items.ItemStackHandler;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -52,6 +51,31 @@ public class ProjectorBlockEntity extends KineticBlockEntity implements WorldlyC
 
     public ProjectorBlockEntity(BlockPos pos, BlockState state) {
         super(ModRegistry.PROJECTOR_BE.get(), pos, state);
+    }
+
+    private net.minecraftforge.common.util.LazyOptional<net.minecraftforge.items.IItemHandler> itemHandlerCap =
+            net.minecraftforge.common.util.LazyOptional.of(() -> new net.minecraftforge.items.wrapper.InvWrapper(this));
+
+    @Override
+    public <T> net.minecraftforge.common.util.LazyOptional<T> getCapability(
+            net.minecraftforge.common.capabilities.Capability<T> capability, @javax.annotation.Nullable Direction side) {
+        if (capability == net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER) {
+            return itemHandlerCap.cast();
+        }
+        return super.getCapability(capability, side);
+    }
+
+    @Override
+    public void invalidateCaps() {
+        super.invalidateCaps();
+        itemHandlerCap.invalidate();
+    }
+
+    @Override
+    public void reviveCaps() {
+        super.reviveCaps();
+        itemHandlerCap = net.minecraftforge.common.util.LazyOptional.of(
+                () -> new net.minecraftforge.items.wrapper.InvWrapper(this));
     }
 
     @Override
@@ -137,7 +161,7 @@ public class ProjectorBlockEntity extends KineticBlockEntity implements WorldlyC
 
     private void updateRemoteLinks() {
         boolean enabled = hasRemoteControlUpgrade();
-        if (enabled == appliedRemoteEnabled && ItemStack.isSameItemSameComponents(upgrade, appliedRemoteUpgrade)) return;
+        if (enabled == appliedRemoteEnabled && ItemStack.isSameItemSameTags(upgrade, appliedRemoteUpgrade)) return;
         ItemStackHandler frequencies = enabled ? RemoteControlUpgradeItem.getFrequencyItems(upgrade) : new ItemStackHandler(4);
         applyingRemoteFrequencies = true;
         try {
@@ -190,7 +214,8 @@ public class ProjectorBlockEntity extends KineticBlockEntity implements WorldlyC
         if (line < 0 || line >= 256) return;
         while (displayLines.size() <= line) displayLines.add(Component.empty());
         displayLines.set(line, text == null ? Component.empty() : text.copy());
-        while (!displayLines.isEmpty() && displayLines.getLast().getString().isBlank()) displayLines.removeLast();
+        while (!displayLines.isEmpty() && displayLines.get(displayLines.size() - 1).getString().isBlank())
+            displayLines.remove(displayLines.size() - 1);
         sync();
     }
 
@@ -349,14 +374,14 @@ public class ProjectorBlockEntity extends KineticBlockEntity implements WorldlyC
     }
 
     @Override
-    protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        super.write(tag, registries, clientPacket);
-        if (!film.isEmpty()) tag.put("Film", film.saveOptional(registries));
-        if (!upgrade.isEmpty()) tag.put("Upgrade", upgrade.saveOptional(registries));
+    protected void write(CompoundTag tag, boolean clientPacket) {
+        super.write(tag, clientPacket);
+        if (!film.isEmpty()) tag.put("Film", film.save(new CompoundTag()));
+        if (!upgrade.isEmpty()) tag.put("Upgrade", upgrade.save(new CompoundTag()));
         if (!displayLines.isEmpty()) {
             ListTag lines = new ListTag();
             for (Component line : displayLines) lines.add(net.minecraft.nbt.StringTag.valueOf(
-                    Component.Serializer.toJson(line, registries)));
+                    Component.Serializer.toJson(line)));
             tag.put("DisplayLines", lines);
         }
         tag.putInt("CurrentPage", currentPage);
@@ -364,22 +389,22 @@ public class ProjectorBlockEntity extends KineticBlockEntity implements WorldlyC
     }
 
     @Override
-    protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        super.read(tag, registries, clientPacket);
+    protected void read(CompoundTag tag, boolean clientPacket) {
+        super.read(tag, clientPacket);
         if (tag.contains("Film")) {
-            film = ItemStack.parseOptional(registries, tag.getCompound("Film"));
+            film = ItemStack.of(tag.getCompound("Film"));
         } else if (tag.contains("FilmId") && !tag.getString("FilmId").isBlank()) {
             film = FilmItem.create(ModRegistry.FILM.get(), tag.getString("FilmId"), "Film");
         } else {
             film = ItemStack.EMPTY;
         }
-        upgrade = tag.contains("Upgrade") ? ItemStack.parseOptional(registries, tag.getCompound("Upgrade")) : ItemStack.EMPTY;
+        upgrade = tag.contains("Upgrade") ? ItemStack.of(tag.getCompound("Upgrade")) : ItemStack.EMPTY;
         if (!hasDisplayUpgrade() && !hasRemoteControlUpgrade()) upgrade = ItemStack.EMPTY;
         displayLines.clear();
         if (hasDisplayUpgrade()) {
             ListTag lines = tag.getList("DisplayLines", Tag.TAG_STRING);
             for (int i = 0; i < lines.size() && i < 256; i++) {
-                Component line = Component.Serializer.fromJson(lines.getString(i), registries);
+                Component line = Component.Serializer.fromJson(lines.getString(i));
                 if (line != null) displayLines.add(line);
             }
         }
@@ -454,15 +479,15 @@ public class ProjectorBlockEntity extends KineticBlockEntity implements WorldlyC
         }
 
         @Override
-        public void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
+        public void write(CompoundTag tag, boolean clientPacket) {
             CompoundTag nested = new CompoundTag();
-            link.write(nested, registries, clientPacket);
+            link.write(nested, clientPacket);
             tag.put("NextLink", nested);
         }
 
         @Override
-        public void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-            if (tag.contains("NextLink")) link.read(tag.getCompound("NextLink"), registries, clientPacket);
+        public void read(CompoundTag tag, boolean clientPacket) {
+            if (tag.contains("NextLink")) link.read(tag.getCompound("NextLink"), clientPacket);
         }
     }
 }

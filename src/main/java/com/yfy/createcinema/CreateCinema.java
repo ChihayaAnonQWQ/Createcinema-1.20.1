@@ -7,16 +7,14 @@ import com.yfy.createcinema.client.ponder.CreateCinemaPonderPlugin;
 import com.yfy.createcinema.datagen.ModItemModelProvider;
 import com.yfy.createcinema.client.browser.PlatformInfo;
 import com.yfy.createcinema.display.CinemaDisplaySources;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.items.wrapper.SidedInvWrapper;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.config.ModConfig;
-import net.neoforged.fml.loading.FMLEnvironment;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.ModLoadingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +24,9 @@ public class CreateCinema {
     public static final Logger LOGGER = LoggerFactory.getLogger(CreateCinema.class);
     public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(MODID);
 
-    public CreateCinema(IEventBus modEventBus, ModContainer modContainer) {
+    public CreateCinema() {
+        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+        LOGGER.info("Create Cinema initializing (Forge 1.20.1 port)");
         PlatformInfo.ensureJavacppPlatform();
         if (PlatformInfo.isAndroid()) {
             LOGGER.info("CreateCinema Android compatibility patch active; JavaCPP platform {}, pathsFirst={}",
@@ -37,14 +37,12 @@ public class CreateCinema {
         ModRegistry.ITEMS.register(modEventBus);
         ModRegistry.BLOCK_ENTITIES.register(modEventBus);
         ModRegistry.MENU_TYPES.register(modEventBus);
-        ModRegistry.DATA_COMPONENTS.register(modEventBus);
         ModRegistry.CREATIVE_TABS.register(modEventBus);
         REGISTRATE.registerEventListeners(modEventBus);
         CinemaDisplaySources.register();
-        modContainer.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
+        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
 
         modEventBus.addListener(this::commonSetup);
-        modEventBus.addListener(this::registerCapabilities);
         modEventBus.addListener(ModItemModelProvider::gatherData);
 
         if (FMLEnvironment.dist == Dist.CLIENT) {
@@ -58,10 +56,5 @@ public class CreateCinema {
             BlockStressValues.IMPACTS.register(ModRegistry.PROJECTOR.get(), () -> 4.0);
             BlockStressValues.IMPACTS.register(ModRegistry.NETWORK_PROJECTOR.get(), () -> 4.0);
         });
-    }
-
-    private void registerCapabilities(RegisterCapabilitiesEvent event) {
-        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, ModRegistry.PROJECTOR_BE.get(),
-                (projector, side) -> new SidedInvWrapper(projector, side));
     }
 }

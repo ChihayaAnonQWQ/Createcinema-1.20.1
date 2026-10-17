@@ -1,32 +1,28 @@
 package com.yfy.createcinema.packet;
 
 import com.yfy.createcinema.client.network.ClientPacketHandlers;
-import com.yfy.createcinema.CreateCinema;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraftforge.network.NetworkEvent;
 
-public record S2CFilmAvailablePacket(String filmId) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<S2CFilmAvailablePacket> TYPE =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(CreateCinema.MODID, "film_available"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, S2CFilmAvailablePacket> STREAM_CODEC =
-            StreamCodec.composite(ByteBufCodecs.STRING_UTF8, S2CFilmAvailablePacket::filmId, S2CFilmAvailablePacket::new);
+import java.util.function.Supplier;
 
-    @Override
-    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
-        return TYPE;
+public record S2CFilmAvailablePacket(String filmId) {
+
+    public static void encode(S2CFilmAvailablePacket packet, FriendlyByteBuf buf) {
+        buf.writeUtf(packet.filmId);
+    }
+
+    public static S2CFilmAvailablePacket decode(FriendlyByteBuf buf) {
+        return new S2CFilmAvailablePacket(buf.readUtf());
     }
 
     public void sendTo(ServerPlayer player) {
-        PacketDistributor.sendToPlayer(player, this);
+        ModNetwork.sendToPlayer(player, this);
     }
 
-    public void handle(IPayloadContext ctx) {
-        ctx.enqueueWork(() -> com.yfy.createcinema.client.network.ClientPacketHandlers.handleFilmAvailable(this));
+    public static void handle(S2CFilmAvailablePacket packet, Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() -> ClientPacketHandlers.handleFilmAvailable(packet));
+        ctx.get().setPacketHandled(true);
     }
 }

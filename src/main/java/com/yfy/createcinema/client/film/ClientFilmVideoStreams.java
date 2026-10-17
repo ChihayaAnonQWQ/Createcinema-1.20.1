@@ -233,7 +233,7 @@ public final class ClientFilmVideoStreams {
             NativeImage image = selected.image;
             if (texture == null || width != image.getWidth() || height != image.getHeight()) {
                 if (textureLocation != null) Minecraft.getInstance().getTextureManager().release(textureLocation);
-                textureLocation = ResourceLocation.fromNamespaceAndPath(CreateCinema.MODID,
+                textureLocation = new ResourceLocation(CreateCinema.MODID,
                         "film_video/" + Integer.toUnsignedString(key.hashCode()));
                 texture = new DynamicTexture(image);
                 Minecraft.getInstance().getTextureManager().register(textureLocation, texture);

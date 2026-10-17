@@ -4,6 +4,7 @@ import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.yfy.createcinema.blockentity.BurnerBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -22,6 +23,7 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.network.NetworkHooks;
 
 public class BurnerBlock extends Block implements EntityBlock, IWrenchable {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
@@ -48,24 +50,25 @@ public class BurnerBlock extends Block implements EntityBlock, IWrenchable {
     }
 
     @Override
-    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
 
     @Override
-    protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player,
+                                 InteractionHand hand, BlockHitResult hitResult) {
         if (level.getBlockEntity(pos) instanceof BurnerBlockEntity burner) {
             if (player.isShiftKeyDown() && !burner.hasNoFilm()) {
                 if (!level.isClientSide) burner.ejectFilm(player);
                 return InteractionResult.sidedSuccess(level.isClientSide);
             }
             if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
-                serverPlayer.openMenu(burner.getMenuProvider(), pos);
+                NetworkHooks.openScreen(serverPlayer, burner.getMenuProvider(), pos);
             }
             return InteractionResult.SUCCESS;
         }

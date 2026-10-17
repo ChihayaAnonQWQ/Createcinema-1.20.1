@@ -111,13 +111,26 @@ public class ClientVideoBurner {
                 }
                 Path cacheDir = PlatformInfo.isAndroid()
                         ? Path.of(System.getProperty("java.io.tmpdir")).resolve("createcinema-native-cache")
-                        : Minecraft.getInstance().gameDirectory.toPath().resolve("createcinema").resolve("native-cache");
+                        : NativeLibraries.perProcessCacheDir(Minecraft.getInstance().gameDirectory.toPath()
+                                .resolve("createcinema").resolve("native-cache"));
                 Files.createDirectories(cacheDir);
-                System.setProperty("org.bytedeco.javacpp.cachedir", cacheDir.toAbsolutePath().toString());
+                String absoluteCache = cacheDir.toAbsolutePath().toString();
+                System.setProperty("org.bytedeco.javacpp.cachedir", absoluteCache);
+                CreateCinema.LOGGER.info("Embedded FFmpeg native cache: {}", absoluteCache);
                 if (PlatformInfo.isAndroid()) {
-                    CreateCinema.LOGGER.info("CreateCinema Android FFmpeg native cache: {}", cacheDir.toAbsolutePath());
                     loadAndroidFfmpegLibraries();
                     CreateCinema.LOGGER.info("CreateCinema loaded Android FFmpeg NDK libraries");
+                } else {
+                    // Extract the DLLs ourselves (with retries), then tell JavaCPP to look at that directory first.
+                    // Loader.findLibrary then hands out file: URLs and loadLibrary maps them directly, instead of
+                    // deleting and rewriting each cached DLL - the rewrite is what fails when a security product
+                    // holds the file, and that failure poisons the FFmpeg classes for the whole session.
+                    String platform = PlatformInfo.javacppPlatform();
+                    Path nativeDirectory = NativeLibraries.prepare(cacheDir, platform);
+                    String nativePath = nativeDirectory.toAbsolutePath().toString();
+                    System.setProperty("org.bytedeco.javacpp.pathsFirst", "true");
+                    System.setProperty("org.bytedeco.javacpp.platform.preloadpath", nativePath);
+                    System.setProperty("org.bytedeco.javacpp.platform.linkpath", nativePath);
                 }
                 FFmpegFrameGrabber.tryLoad();
                 FFMPEG_READY.complete(null);
@@ -125,8 +138,32 @@ public class ClientVideoBurner {
             } catch (Throwable error) {
                 FFMPEG_READY.completeExceptionally(error);
                 CreateCinema.LOGGER.error("Failed to load embedded FFmpeg", error);
+                writeFfmpegDiagnostics(error);
             }
         });
+    }
+
+    /** Writes the failure next to the film data, because the game log can be unavailable when the JVM is restarted. */
+    private static void writeFfmpegDiagnostics(Throwable error) {
+        try {
+            Path directory = Minecraft.getInstance().gameDirectory.toPath().resolve("createcinema");
+            Files.createDirectories(directory);
+            StringBuilder text = new StringBuilder();
+            text.append("Create Cinema - embedded FFmpeg failed to load\n");
+            text.append("time       : ").append(java.time.Instant.now()).append('\n');
+            text.append("java       : ").append(System.getProperty("java.version"))
+                    .append(" (").append(System.getProperty("java.vendor")).append(")\n");
+            text.append("os         : ").append(System.getProperty("os.name"))
+                    .append(' ').append(System.getProperty("os.arch")).append('\n');
+            text.append("cachedir   : ").append(System.getProperty("org.bytedeco.javacpp.cachedir")).append('\n');
+            text.append("platform   : ").append(PlatformInfo.javacppPlatform()).append('\n');
+            java.io.StringWriter stack = new java.io.StringWriter();
+            error.printStackTrace(new java.io.PrintWriter(stack));
+            text.append("stacktrace :\n").append(stack).append('\n');
+            Files.writeString(directory.resolve("ffmpeg-error.log"), text.toString());
+        } catch (Throwable ignored) {
+            // diagnostics must never break the game
+        }
     }
 
     public static void awaitFfmpeg() {

@@ -1,7 +1,9 @@
 {
   "required": true,
+  "minVersion": "0.8",
   "package": "com.yfy.createcinema.mixin",
-  "compatibilityLevel": "JAVA_21",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "createcinema.refmap.json",
   "mixins": [
     "AllItemAttributeTypesMixin",
     "ItemEntityMixin",

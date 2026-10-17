@@ -843,7 +843,11 @@ public final class ClientNetworkProjectorStreams {
                             : NetworkProjectorBlockEntity.PlaybackHealth.SOURCE_UNREACHABLE;
                     reportPlaybackHealth(System.currentTimeMillis(), true);
                     retryAt = configurationFailure ? Long.MAX_VALUE : System.currentTimeMillis() + 5_000L;
-                    if (configurationFailure) {
+                    if (ClientVideoBurner.ffmpegLoadFailed()) {
+                        CreateCinema.LOGGER.warn("Network projector cannot stream {}: the embedded FFmpeg decoder "
+                                + "failed to load ({}); see the earlier 'Failed to load embedded FFmpeg' entry",
+                                url, shortReason(details));
+                    } else if (configurationFailure) {
                         CreateCinema.LOGGER.warn("Network projector requires updated Douyin client authorization for {}", url);
                     } else {
                         CreateCinema.LOGGER.warn("Network projector failed to stream {}", url, error);
@@ -1112,6 +1116,9 @@ public final class ClientNetworkProjectorStreams {
 
         private static Component visibleError(String url, Throwable error) {
             String message = nestedMessage(error).toLowerCase(java.util.Locale.ROOT);
+            if (ClientVideoBurner.ffmpegLoadFailed()) {
+                return Component.translatable("gui.createcinema.stream.error.ffmpeg");
+            }
             if (message.contains("douyin cookie is not configured")) {
                 return Component.translatable("gui.createcinema.stream.error.douyin_cookie_required");
             }
@@ -1185,6 +1192,13 @@ public final class ClientNetworkProjectorStreams {
             return builder.toString();
         }
 
+        private static String shortReason(String details) {
+            String text = details == null ? "" : details.trim();
+            int newline = text.indexOf('\n');
+            if (newline > 0) text = text.substring(0, newline);
+            return text.length() > 160 ? text.substring(0, 160) + "..." : text;
+        }
+
         private NetworkProjectionFrame uploadReady() {
             DecodedFrame frame = null;
             boolean enteredRebuffer = false;
@@ -1214,7 +1228,7 @@ public final class ClientNetworkProjectorStreams {
             if (frame != null) {
                 if (texture == null || width != frame.width || height != frame.height) {
                     if (textureLocation != null) Minecraft.getInstance().getTextureManager().release(textureLocation);
-                    textureLocation = ResourceLocation.fromNamespaceAndPath(CreateCinema.MODID,
+                    textureLocation = new ResourceLocation(CreateCinema.MODID,
                             "network_stream/" + Integer.toUnsignedString(key.hashCode()));
                     texture = new DynamicTexture(frame.image);
                     Minecraft.getInstance().getTextureManager().register(textureLocation, texture);

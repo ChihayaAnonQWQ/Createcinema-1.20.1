@@ -130,7 +130,7 @@ public class ClientFilmCache {
             NativeImage image = readJpeg(in);
             if (cached == null || cached.width != image.getWidth() || cached.height != image.getHeight()) {
                 if (cached != null) Minecraft.getInstance().getTextureManager().release(cached.location);
-                ResourceLocation location = ResourceLocation.fromNamespaceAndPath(CreateCinema.MODID, "film/" + filmId.replace('-', '_'));
+                ResourceLocation location = new ResourceLocation(CreateCinema.MODID, "film/" + filmId.replace('-', '_'));
                 DynamicTexture texture = new DynamicTexture(image);
                 Minecraft.getInstance().getTextureManager().register(location, texture);
                 FRAME_TEXTURES.put(filmId, new FrameTexture(location, texture, frameIndex, image.getWidth(), image.getHeight()));

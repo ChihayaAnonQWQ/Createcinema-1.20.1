@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " I ",
+    "CGC",
+    "ASA"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "C": {
+      "item": "minecraft:copper_ingot"
+    },
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "A": {
+      "item": "minecraft:andesite"
+    },
+    "S": {
+      "item": "create:shaft"
+    }
+  },
+  "result": {
+    "count": 1,
+    "item": "createcinema:projector"
+  }
+}

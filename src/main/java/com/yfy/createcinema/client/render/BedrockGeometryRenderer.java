@@ -22,9 +22,9 @@ import net.minecraft.client.resources.model.ModelState;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.core.Direction;
-import net.neoforged.neoforge.client.model.IModelBuilder;
-import net.neoforged.neoforge.client.model.geometry.IGeometryBakingContext;
-import net.neoforged.neoforge.client.model.pipeline.QuadBakingVertexConsumer;
+import net.minecraftforge.client.model.IModelBuilder;
+import net.minecraftforge.client.model.geometry.IGeometryBakingContext;
+import net.minecraftforge.client.model.pipeline.QuadBakingVertexConsumer;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -164,11 +164,12 @@ public final class BedrockGeometryRenderer {
             Vector3f edge2 = new Vector3f(points[2]).sub(points[0]);
             Vector3f normal = edge1.cross(edge2).normalize();
             Uv uv = entry.getValue();
-            float u0 = sprite.getU(uv.u / textureWidth);
-            float v0 = sprite.getV(uv.v / textureHeight);
-            float u1 = sprite.getU((uv.u + uv.width) / textureWidth);
-            float v1 = sprite.getV((uv.v + uv.height) / textureHeight);
-            QuadBakingVertexConsumer consumer = new QuadBakingVertexConsumer();
+            // 1.20.1 TextureAtlasSprite#getU/getV take a 0..16 sprite-local pixel value, not a 0..1 fraction.
+            float u0 = sprite.getU(16.0f * uv.u / textureWidth);
+            float v0 = sprite.getV(16.0f * uv.v / textureHeight);
+            float u1 = sprite.getU(16.0f * (uv.u + uv.width) / textureWidth);
+            float v1 = sprite.getV(16.0f * (uv.v + uv.height) / textureHeight);
+            QuadBakingVertexConsumer.Buffered consumer = new QuadBakingVertexConsumer.Buffered();
             consumer.setSprite(sprite);
             consumer.setDirection(Direction.getNearest(normal.x, normal.y, normal.z));
             consumer.setShade(true);
@@ -176,7 +177,7 @@ public final class BedrockGeometryRenderer {
             bakedVertex(consumer, points[1], u1, v1, normal);
             bakedVertex(consumer, points[2], u1, v0, normal);
             bakedVertex(consumer, points[3], u0, v0, normal);
-            builder.addUnculledFace(consumer.bakeQuad());
+            builder.addUnculledFace(consumer.getQuad());
         }
     }
 
@@ -209,10 +210,10 @@ public final class BedrockGeometryRenderer {
         point.add(0.5f, 0.5f, 0.5f);
     }
 
-    private static void bakedVertex(QuadBakingVertexConsumer consumer, Vector3f point, float u, float v,
+    private static void bakedVertex(VertexConsumer consumer, Vector3f point, float u, float v,
                                     Vector3f normal) {
-        consumer.addVertex(point.x, point.y, point.z).setColor(255, 255, 255, 255).setUv(u, v)
-                .setNormal(normal.x, normal.y, normal.z);
+        consumer.vertex(point.x, point.y, point.z).color(255, 255, 255, 255).uv(u, v)
+                .normal(normal.x, normal.y, normal.z).endVertex();
     }
 
     static float projectorAnimationRotation(String bone, float seconds, boolean powered) {
@@ -330,9 +331,9 @@ public final class BedrockGeometryRenderer {
 
     private static void vertex(VertexConsumer vertices, Matrix4f matrix, float x, float y, float z,
                                float u, float v, Direction normal, int packedLight) {
-        vertices.addVertex(matrix, x, y, z).setColor(255, 255, 255, 255).setUv(u, v)
-                .setOverlay(OverlayTexture.NO_OVERLAY).setLight(packedLight)
-                .setNormal(normal.getStepX(), normal.getStepY(), normal.getStepZ());
+        vertices.vertex(matrix, x, y, z).color(255, 255, 255, 255).uv(u, v)
+                .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight)
+                .normal(normal.getStepX(), normal.getStepY(), normal.getStepZ()).endVertex();
     }
 
     private static Geometry geometry(ResourceLocation model) {
@@ -467,7 +468,7 @@ public final class BedrockGeometryRenderer {
     }
 
     private static ResourceLocation id(String path) {
-        return ResourceLocation.fromNamespaceAndPath(CreateCinema.MODID, path);
+        return new ResourceLocation(CreateCinema.MODID, path);
     }
 
     private record Geometry(int textureWidth, int textureHeight, List<Bone> roots, Map<String, Float> spinRates) {

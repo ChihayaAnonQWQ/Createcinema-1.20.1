@@ -13,7 +13,7 @@ public final class CableCasingCTRegistration {
 
     public static void register() {
         CustomBlockModels models = CreateClient.MODEL_SWAPPER.getCustomBlockModels();
-        ResourceLocation cable = ResourceLocation.fromNamespaceAndPath(CreateCinema.MODID, "cable");
+        ResourceLocation cable = new ResourceLocation(CreateCinema.MODID, "cable");
         models.register(cable, base -> new CTModel(base, new CableCasingCTBehaviour()));
     }
 }

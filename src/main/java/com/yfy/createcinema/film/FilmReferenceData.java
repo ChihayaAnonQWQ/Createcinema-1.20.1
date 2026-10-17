@@ -1,6 +1,5 @@
 package com.yfy.createcinema.film;
 
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -19,11 +18,11 @@ public final class FilmReferenceData extends SavedData {
     private final Set<String> deletedFilms = new HashSet<>();
 
     public static FilmReferenceData get(MinecraftServer server) {
-        return server.overworld().getDataStorage().computeIfAbsent(
-                new Factory<>(FilmReferenceData::new, FilmReferenceData::load), DATA_NAME);
+        return server.overworld().getDataStorage()
+                .computeIfAbsent(FilmReferenceData::load, FilmReferenceData::new, DATA_NAME);
     }
 
-    private static FilmReferenceData load(CompoundTag tag, HolderLookup.Provider registries) {
+    private static FilmReferenceData load(CompoundTag tag) {
         FilmReferenceData data = new FilmReferenceData();
         CompoundTag referenceTag = tag.getCompound("References");
         for (String filmId : referenceTag.getAllKeys()) {
@@ -41,7 +40,7 @@ public final class FilmReferenceData extends SavedData {
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+    public CompoundTag save(CompoundTag tag) {
         CompoundTag referenceTag = new CompoundTag();
         references.forEach((filmId, copyIds) -> {
             ListTag copies = new ListTag();

@@ -3,9 +3,9 @@ package com.yfy.createcinema.datagen;
 import com.yfy.createcinema.CreateCinema;
 import net.minecraft.data.PackOutput;
 import net.minecraft.world.item.ItemDisplayContext;
-import net.neoforged.neoforge.client.model.generators.ItemModelProvider;
-import net.neoforged.neoforge.common.data.ExistingFileHelper;
-import net.neoforged.neoforge.data.event.GatherDataEvent;
+import net.minecraftforge.client.model.generators.ItemModelProvider;
+import net.minecraftforge.common.data.ExistingFileHelper;
+import net.minecraftforge.data.event.GatherDataEvent;
 
 public class ModItemModelProvider extends ItemModelProvider {
     public ModItemModelProvider(PackOutput output, ExistingFileHelper existingFileHelper) {
@@ -35,7 +35,8 @@ public class ModItemModelProvider extends ItemModelProvider {
 
     public static void gatherData(GatherDataEvent event) {
         if (event.includeClient()) {
-            event.addProvider(new ModItemModelProvider(event.getGenerator().getPackOutput(), event.getExistingFileHelper()));
+            event.getGenerator().addProvider(event.includeClient(),
+                    new ModItemModelProvider(event.getGenerator().getPackOutput(), event.getExistingFileHelper()));
         }
     }
 

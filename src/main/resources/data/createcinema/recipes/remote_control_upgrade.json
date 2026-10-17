@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "RPR",
+    "PLP",
+    "RPR"
+  ],
+  "key": {
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "P": {
+      "item": "minecraft:paper"
+    },
+    "L": {
+      "item": "create:redstone_link"
+    }
+  },
+  "result": {
+    "count": 1,
+    "item": "createcinema:remote_control_upgrade"
+  }
+}

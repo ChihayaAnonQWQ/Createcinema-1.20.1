@@ -48,7 +48,7 @@ public class BurnerScreen extends AbstractContainerScreen<BurnerMenu> {
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+        renderBackground(guiGraphics);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         renderTooltip(guiGraphics, mouseX, mouseY);
     }

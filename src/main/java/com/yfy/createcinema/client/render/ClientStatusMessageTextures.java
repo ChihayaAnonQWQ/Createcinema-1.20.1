@@ -35,7 +35,7 @@ public final class ClientStatusMessageTextures {
         Entry cached = CACHE.get(key);
         if (cached != null) return cached.location;
         NativeImage image = createImage(text, error);
-        ResourceLocation location = ResourceLocation.fromNamespaceAndPath(CreateCinema.MODID,
+        ResourceLocation location = new ResourceLocation(CreateCinema.MODID,
                 "status_message/" + Integer.toUnsignedString(key.hashCode()));
         DynamicTexture texture = new DynamicTexture(image);
         Minecraft.getInstance().getTextureManager().register(location, texture);

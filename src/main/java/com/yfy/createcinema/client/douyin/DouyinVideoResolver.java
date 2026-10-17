@@ -74,7 +74,7 @@ public final class DouyinVideoResolver {
         if (longVideoId != null) return resolveLongVideo(longVideoId, quality);
         if (isHomepageFeed(input)) {
             List<JsonObject> feed = authenticatedFeed();
-            JsonObject item = feed.getFirst();
+            JsonObject item = feed.get(0);
             VideoCandidate selected = selectVideo(item, quality);
             return new BilibiliResolver.ResolvedMedia(normalizePlayUrl(selected.url),
                     normalizePlayUrl(selected.url), "https://www.douyin.com/", duration(item));

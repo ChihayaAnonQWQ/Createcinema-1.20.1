@@ -11,14 +11,14 @@ import com.yfy.createcinema.gui.BurnerScreen;
 import com.yfy.createcinema.gui.NetworkProjectorScreen;
 import com.yfy.createcinema.gui.ProjectorScreen;
 import com.yfy.createcinema.gui.RemoteControlUpgradeScreen;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.neoforge.client.event.EntityRenderersEvent;
-import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.client.event.EntityRenderersEvent;
 
-@EventBusSubscriber(modid = CreateCinema.MODID, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = CreateCinema.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class ClientEventHandler {
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
@@ -28,15 +28,19 @@ public class ClientEventHandler {
                     java.util.concurrent.CompletableFuture.runAsync(() ->
                             DouyinBrowserBridge.disable(BrowserProvider.byId(provider))));
             ClientVideoBurner.preloadFfmpeg();
+            registerScreens();
         });
     }
 
-    @SubscribeEvent
-    public static void registerScreens(RegisterMenuScreensEvent event) {
-        event.register(ModRegistry.BURNER_MENU.get(), BurnerScreen::new);
-        event.register(ModRegistry.PROJECTOR_MENU.get(), ProjectorScreen::new);
-        event.register(ModRegistry.NETWORK_PROJECTOR_MENU.get(), NetworkProjectorScreen::new);
-        event.register(ModRegistry.REMOTE_CONTROL_UPGRADE_MENU.get(), RemoteControlUpgradeScreen::new);
+    /**
+     * Forge 1.20.1 has no menu-screen registration event: screens are bound to their menu types through
+     * {@link MenuScreens#register} during client setup.
+     */
+    private static void registerScreens() {
+        MenuScreens.register(ModRegistry.BURNER_MENU.get(), BurnerScreen::new);
+        MenuScreens.register(ModRegistry.PROJECTOR_MENU.get(), ProjectorScreen::new);
+        MenuScreens.register(ModRegistry.NETWORK_PROJECTOR_MENU.get(), NetworkProjectorScreen::new);
+        MenuScreens.register(ModRegistry.REMOTE_CONTROL_UPGRADE_MENU.get(), RemoteControlUpgradeScreen::new);
     }
 
     @SubscribeEvent

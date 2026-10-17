@@ -11,27 +11,28 @@ import net.minecraft.client.resources.model.Material;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ModelState;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ModelEvent;
-import net.neoforged.neoforge.client.model.IModelBuilder;
-import net.neoforged.neoforge.client.model.geometry.IGeometryBakingContext;
-import net.neoforged.neoforge.client.model.geometry.IGeometryLoader;
-import net.neoforged.neoforge.client.model.geometry.SimpleUnbakedGeometry;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.client.event.ModelEvent;
+import net.minecraftforge.client.model.IModelBuilder;
+import net.minecraftforge.client.model.geometry.IGeometryBakingContext;
+import net.minecraftforge.client.model.geometry.IGeometryLoader;
+import net.minecraftforge.client.model.geometry.SimpleUnbakedGeometry;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 
-@EventBusSubscriber(modid = CreateCinema.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+@Mod.EventBusSubscriber(modid = CreateCinema.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class BedrockModelLoader {
     private BedrockModelLoader() {
     }
 
     @SubscribeEvent
     public static void registerGeometryLoaders(ModelEvent.RegisterGeometryLoaders event) {
-        event.register(ResourceLocation.fromNamespaceAndPath(CreateCinema.MODID, "bedrock"), Loader.INSTANCE);
+        // 1.20.1 registers geometry loaders by path only; the namespace is the active mod id.
+        event.register("bedrock", Loader.INSTANCE);
     }
 
     private static final class Loader implements IGeometryLoader<Geometry> {
@@ -45,7 +46,7 @@ public final class BedrockModelLoader {
                 if (model.has("bones")) {
                     for (JsonElement bone : model.getAsJsonArray("bones")) bones.add(bone.getAsString());
                 }
-                return new Geometry(ResourceLocation.parse(model.get("source").getAsString()), Set.copyOf(bones));
+                return new Geometry(new ResourceLocation(model.get("source").getAsString()), Set.copyOf(bones));
             } catch (RuntimeException error) {
                 throw new JsonParseException("Bedrock model source is invalid", error);
             }
@@ -63,7 +64,8 @@ public final class BedrockModelLoader {
 
         @Override
         protected void addQuads(IGeometryBakingContext context, IModelBuilder<?> builder, ModelBaker baker,
-                                Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelState) {
+                                Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelState,
+                                ResourceLocation modelLocation) {
             BedrockGeometryRenderer.bakeStatic(source, bones, context, builder, spriteGetter, modelState);
         }
     }

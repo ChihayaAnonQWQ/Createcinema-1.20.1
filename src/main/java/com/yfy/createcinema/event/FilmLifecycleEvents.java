@@ -3,13 +3,13 @@ package com.yfy.createcinema.event;
 import com.yfy.createcinema.CreateCinema;
 import com.yfy.createcinema.film.FilmLifecycle;
 import com.yfy.createcinema.item.FilmItem;
-import net.neoforged.bus.api.EventPriority;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.item.ItemExpireEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.event.entity.item.ItemExpireEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 
-@EventBusSubscriber(modid = CreateCinema.MODID)
+@Mod.EventBusSubscriber(modid = CreateCinema.MODID)
 public final class FilmLifecycleEvents {
     private FilmLifecycleEvents() {
     }

@@ -261,7 +261,7 @@ public class ClientConfigManagerScreen extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(graphics, mouseX, mouseY, partialTick);
+        renderBackground(graphics);
         if (selectedProvider.enabled()
                 && DouyinBrowserBridge.status(selectedProvider) == DouyinBrowserBridge.Status.READY) {
             status = Component.translatable("gui.createcinema.config_manager.browser_authorized",

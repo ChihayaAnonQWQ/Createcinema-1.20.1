@@ -1,17 +1,16 @@
 package com.yfy.createcinema.gui;
 
 import com.simibubi.create.foundation.gui.menu.HeldItemGhostItemMenu;
-import com.simibubi.create.foundation.item.ItemHelper;
 import com.yfy.createcinema.ModRegistry;
 import com.yfy.createcinema.item.RemoteControlUpgradeItem;
-import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.ItemStackHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
+import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.items.SlotItemHandler;
 
 public class RemoteControlUpgradeMenu extends HeldItemGhostItemMenu {
-    public RemoteControlUpgradeMenu(int id, Inventory inventory, RegistryFriendlyByteBuf buffer) {
+    public RemoteControlUpgradeMenu(int id, Inventory inventory, FriendlyByteBuf buffer) {
         super(ModRegistry.REMOTE_CONTROL_UPGRADE_MENU.get(), id, inventory, buffer);
     }
 
@@ -35,7 +34,7 @@ public class RemoteControlUpgradeMenu extends HeldItemGhostItemMenu {
 
     @Override
     protected void saveData(ItemStack stack) {
-        stack.set(ModRegistry.REMOTE_FREQUENCIES.get(), ItemHelper.containerContentsFromHandler(ghostInventory));
+        stack.getOrCreateTag().put(RemoteControlUpgradeItem.TAG_FREQUENCIES, ghostInventory.serializeNBT());
     }
 
     @Override
@@ -51,7 +50,7 @@ public class RemoteControlUpgradeMenu extends HeldItemGhostItemMenu {
         @Override
         public boolean mayPlace(ItemStack stack) {
             return !stack.is(ModRegistry.REMOTE_CONTROL_UPGRADE.get())
-                    && !stack.has(ModRegistry.REMOTE_FREQUENCIES.get());
+                    && !RemoteControlUpgradeItem.hasFrequencies(stack);
         }
     }
 }

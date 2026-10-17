@@ -13,10 +13,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.Containers;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
@@ -31,6 +29,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraftforge.network.NetworkHooks;
 
 public class ProjectorBlock extends KineticBlock implements IBE<ProjectorBlockEntity>, IWrenchable {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
@@ -60,24 +59,23 @@ public class ProjectorBlock extends KineticBlock implements IBE<ProjectorBlockEn
         return state.getValue(FACING).getAxis();
     }
 
+    // 1.20.1 only has BlockBehaviour#use(state, level, pos, player, hand, hit): the old
+    // useItemOn/useWithoutItem pair is merged here. A wrench must not open the menu (it falls
+    // through to the wrench item), everything else opens the projector GUI.
     @Override
-    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
-                                              Player player, InteractionHand hand, BlockHitResult hitResult) {
-        if (stack.getItem() instanceof WrenchItem) return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
-        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-    }
-
-    @Override
-    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
-        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer && level.getBlockEntity(pos) instanceof ProjectorBlockEntity projector) {
-            serverPlayer.openMenu(projector.getMenuProvider(), pos);
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player,
+                                 InteractionHand hand, BlockHitResult hitResult) {
+        if (player.getItemInHand(hand).getItem() instanceof WrenchItem) return InteractionResult.PASS;
+        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
+                && level.getBlockEntity(pos) instanceof ProjectorBlockEntity projector) {
+            NetworkHooks.openScreen(serverPlayer, projector.getMenuProvider(), pos);
         }
         return InteractionResult.SUCCESS;
     }
 
     @Override
-    protected BlockState updateShape(BlockState state, Direction direction, BlockState neighborState,
-                                     LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
+    public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState,
+                                  LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
         // A newly placed cable updates this projector, not the cable itself.
         ClientCableIndex.onBlockChanged(level, neighborPos);
         return state;

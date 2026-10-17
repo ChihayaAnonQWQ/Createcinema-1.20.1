@@ -1,32 +1,28 @@
 package com.yfy.createcinema.packet;
 
 import com.yfy.createcinema.client.network.ClientPacketHandlers;
-import com.yfy.createcinema.CreateCinema;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraftforge.network.NetworkEvent;
 
-public record S2CFilmDeletedPacket(String filmId) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<S2CFilmDeletedPacket> TYPE =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(CreateCinema.MODID, "film_deleted"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, S2CFilmDeletedPacket> STREAM_CODEC =
-            StreamCodec.composite(ByteBufCodecs.STRING_UTF8, S2CFilmDeletedPacket::filmId, S2CFilmDeletedPacket::new);
+import java.util.function.Supplier;
 
-    @Override
-    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
-        return TYPE;
+public record S2CFilmDeletedPacket(String filmId) {
+
+    public static void encode(S2CFilmDeletedPacket packet, FriendlyByteBuf buf) {
+        buf.writeUtf(packet.filmId);
+    }
+
+    public static S2CFilmDeletedPacket decode(FriendlyByteBuf buf) {
+        return new S2CFilmDeletedPacket(buf.readUtf());
     }
 
     public void sendTo(ServerPlayer player) {
-        PacketDistributor.sendToPlayer(player, this);
+        ModNetwork.sendToPlayer(player, this);
     }
 
-    public void handle(IPayloadContext ctx) {
-        ctx.enqueueWork(() -> com.yfy.createcinema.client.network.ClientPacketHandlers.handleFilmDeleted(this));
+    public static void handle(S2CFilmDeletedPacket packet, Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() -> ClientPacketHandlers.handleFilmDeleted(packet));
+        ctx.get().setPacketHandled(true);
     }
 }

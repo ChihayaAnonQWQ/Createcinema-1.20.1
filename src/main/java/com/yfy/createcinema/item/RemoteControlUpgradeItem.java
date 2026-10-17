@@ -1,10 +1,10 @@
 package com.yfy.createcinema.item;
 
-import com.simibubi.create.foundation.item.ItemHelper;
 import com.yfy.createcinema.ModRegistry;
 import com.yfy.createcinema.gui.RemoteControlUpgradeMenu;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -16,13 +16,16 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.items.ItemStackHandler;
+import net.minecraftforge.items.ItemStackHandler;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 public class RemoteControlUpgradeItem extends Item implements MenuProvider {
+    /** NBT key on the upgrade item holding the serialized {@link ItemStackHandler} of stored frequencies. */
+    public static final String TAG_FREQUENCIES = "RemoteFrequencies";
+
     public RemoteControlUpgradeItem(Properties properties) {
         super(properties);
     }
@@ -33,9 +36,14 @@ public class RemoteControlUpgradeItem extends Item implements MenuProvider {
         if (!player.isShiftKeyDown() || hand != InteractionHand.MAIN_HAND)
             return InteractionResultHolder.pass(stack);
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
-            serverPlayer.openMenu(this, buffer -> ItemStack.STREAM_CODEC.encode(buffer, stack));
+            net.minecraftforge.network.NetworkHooks.openScreen(serverPlayer, this, buffer -> buffer.writeItem(stack));
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
+    }
+
+    public static boolean hasFrequencies(ItemStack stack) {
+        CompoundTag tag = stack.getTag();
+        return tag != null && tag.contains(TAG_FREQUENCIES);
     }
 
     public static ItemStackHandler getFrequencyItems(ItemStack stack) {
@@ -56,12 +64,13 @@ public class RemoteControlUpgradeItem extends Item implements MenuProvider {
             }
 
             private boolean recursive(ItemStack stack) {
-                return stack.is(ModRegistry.REMOTE_CONTROL_UPGRADE.get())
-                        || stack.has(ModRegistry.REMOTE_FREQUENCIES.get());
+                return stack.is(ModRegistry.REMOTE_CONTROL_UPGRADE.get()) || hasFrequencies(stack);
             }
         };
-        ItemContainerContents contents = stack.getOrDefault(ModRegistry.REMOTE_FREQUENCIES.get(), ItemContainerContents.EMPTY);
-        ItemHelper.fillItemStackHandler(contents, inventory);
+        CompoundTag tag = stack.getTag();
+        if (tag != null && tag.contains(TAG_FREQUENCIES)) {
+            inventory.deserializeNBT(tag.getCompound(TAG_FREQUENCIES));
+        }
         return inventory;
     }
 
@@ -76,7 +85,7 @@ public class RemoteControlUpgradeItem extends Item implements MenuProvider {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         if (!Screen.hasShiftDown()) {
             tooltip.add(Component.translatable("tooltip.createcinema.hold_shift").withStyle(ChatFormatting.DARK_GRAY));
             return;

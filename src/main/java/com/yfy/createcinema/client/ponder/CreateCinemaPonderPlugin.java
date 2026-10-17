@@ -10,7 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 
 public class CreateCinemaPonderPlugin implements PonderPlugin {
     private static boolean registered;
-    private static final ResourceLocation TAG = ResourceLocation.fromNamespaceAndPath(CreateCinema.MODID, "cinema");
+    private static final ResourceLocation TAG = new ResourceLocation(CreateCinema.MODID, "cinema");
 
     public static void register() {
         if (registered) return;
@@ -45,6 +45,6 @@ public class CreateCinemaPonderPlugin implements PonderPlugin {
     }
 
     private static ResourceLocation location(String path) {
-        return ResourceLocation.fromNamespaceAndPath(CreateCinema.MODID, path);
+        return new ResourceLocation(CreateCinema.MODID, path);
     }
 }

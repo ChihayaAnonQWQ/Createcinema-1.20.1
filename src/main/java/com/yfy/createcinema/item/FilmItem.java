@@ -2,15 +2,15 @@ package com.yfy.createcinema.item;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.level.Level;
 import com.yfy.createcinema.film.MediaType;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,34 +40,37 @@ public class FilmItem extends Item {
 
     public static ItemStack create(Item item, String filmId, String title) {
         ItemStack stack = new ItemStack(item);
-        CompoundTag tag = new CompoundTag();
+        CompoundTag tag = stack.getOrCreateTag();
         tag.putString(TAG_FILM_ID, filmId);
         tag.putString(TAG_TITLE, title);
         tag.putBoolean(TAG_COMPLETED, false);
         tag.putString(TAG_MEDIA_TYPE, item instanceof FilmItem film ? film.blankMediaType().id() : MediaType.VIDEO.id());
         if (!filmId.isBlank()) tag.putString(TAG_COPY_ID, newCopyId());
-        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
         if (!title.isBlank()) {
-            stack.set(DataComponents.ITEM_NAME, Component.literal(title));
+            stack.setHoverName(Component.literal(title));
         }
         return stack;
     }
 
+    private static CompoundTag tagOrNull(ItemStack stack) {
+        return stack.getTag();
+    }
+
     public static String getFilmId(ItemStack stack) {
-        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        CompoundTag data = tagOrNull(stack);
         if (data == null) return "";
-        return data.copyTag().getString(TAG_FILM_ID);
+        return data.getString(TAG_FILM_ID);
     }
 
     public static String getCopyId(ItemStack stack) {
-        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-        return data == null ? "" : data.copyTag().getString(TAG_COPY_ID);
+        CompoundTag data = tagOrNull(stack);
+        return data == null ? "" : data.getString(TAG_COPY_ID);
     }
 
     public static MediaType getMediaType(ItemStack stack) {
-        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-        if (data != null && data.copyTag().contains(TAG_MEDIA_TYPE)) {
-            return MediaType.fromId(data.copyTag().getString(TAG_MEDIA_TYPE));
+        CompoundTag data = tagOrNull(stack);
+        if (data != null && data.contains(TAG_MEDIA_TYPE)) {
+            return MediaType.fromId(data.getString(TAG_MEDIA_TYPE));
         }
         return stack.getItem() instanceof FilmItem film ? film.blankMediaType() : MediaType.VIDEO;
     }
@@ -96,24 +99,22 @@ public class FilmItem extends Item {
             tag.putDouble(TAG_DURATION_SECONDS, Math.max(0.0, durationSeconds));
             tag.putInt(TAG_PAGE_COUNT, Math.max(1, pageCount));
         });
-        stack.set(DataComponents.ITEM_NAME, Component.literal(title));
+        stack.setHoverName(Component.literal(title));
     }
 
     public static int getPageCount(ItemStack stack) {
-        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-        return data == null ? 1 : Math.max(1, data.copyTag().getInt(TAG_PAGE_COUNT));
+        CompoundTag data = tagOrNull(stack);
+        return data == null ? 1 : Math.max(1, data.getInt(TAG_PAGE_COUNT));
     }
 
     public static void setCopyId(ItemStack stack, String copyId) {
-        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-        CompoundTag tag = data == null ? new CompoundTag() : data.copyTag();
+        CompoundTag tag = stack.getOrCreateTag();
         tag.putString(TAG_COPY_ID, copyId);
-        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
     }
 
     public static boolean isCompleted(ItemStack stack) {
-        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-        return data != null && data.copyTag().getBoolean(TAG_COMPLETED);
+        CompoundTag data = tagOrNull(stack);
+        return data != null && data.getBoolean(TAG_COMPLETED);
     }
 
     public static void setCompleted(ItemStack stack, boolean completed) {
@@ -121,8 +122,8 @@ public class FilmItem extends Item {
     }
 
     public static double getDurationSeconds(ItemStack stack) {
-        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-        return data == null ? 0.0 : Math.max(0.0, data.copyTag().getDouble(TAG_DURATION_SECONDS));
+        CompoundTag data = tagOrNull(stack);
+        return data == null ? 0.0 : Math.max(0.0, data.getDouble(TAG_DURATION_SECONDS));
     }
 
     public static void setDurationSeconds(ItemStack stack, double durationSeconds) {
@@ -134,10 +135,8 @@ public class FilmItem extends Item {
     }
 
     private static void updateData(ItemStack stack, java.util.function.Consumer<CompoundTag> mutation) {
-        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-        CompoundTag tag = data == null ? new CompoundTag() : data.copyTag();
+        CompoundTag tag = stack.getOrCreateTag();
         mutation.accept(tag);
-        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
     }
 
     public static String newCopyId() {
@@ -145,7 +144,7 @@ public class FilmItem extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         String filmId = getFilmId(stack);
         if (filmId.isBlank()) {
             tooltip.add(Component.translatable("item.createcinema.film.empty").withStyle(ChatFormatting.GRAY));

@@ -64,7 +64,7 @@ public class FilmSoundInstance extends AbstractSoundInstance implements Tickable
         looping = false;
         attenuation = SoundInstance.Attenuation.LINEAR;
         relative = false;
-        sound = new Sound(location, ConstantFloat.of(1.0f), ConstantFloat.of(1.0f), 1,
+        sound = new Sound(location.toString(), ConstantFloat.of(1.0f), ConstantFloat.of(1.0f), 1,
                 Sound.Type.FILE, true, false, ClientConfig.speakerAttenuationDistance());
     }
 
@@ -87,7 +87,7 @@ public class FilmSoundInstance extends AbstractSoundInstance implements Tickable
             } catch (IOException e) {
                 throw new CompletionException(e);
             }
-        }, Util.nonCriticalIoPool());
+        }, Util.ioPool());
     }
 
     @Override
@@ -176,6 +176,6 @@ public class FilmSoundInstance extends AbstractSoundInstance implements Tickable
 
     private static ResourceLocation soundLocation(String filmId, BlockPos speaker) {
         String path = "film_audio/" + filmId.replace('-', '_') + "/" + Long.toUnsignedString(speaker.asLong());
-        return ResourceLocation.fromNamespaceAndPath(CreateCinema.MODID, path);
+        return new ResourceLocation(CreateCinema.MODID, path);
     }
 }

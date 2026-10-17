@@ -75,17 +75,17 @@ public class SpeakerBlock extends KineticBlock implements IWrenchable {
 
     // ---- 碰撞箱 ----
     @Override
-    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return shapeFor(state);
     }
 
     @Override
-    protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return shapeFor(state);
     }
 
     @Override
-    protected VoxelShape getBlockSupportShape(BlockState state, BlockGetter level, BlockPos pos) {
+    public VoxelShape getBlockSupportShape(BlockState state, BlockGetter level, BlockPos pos) {
         return SUPPORT_SHAPE;
     }
 

@@ -20,9 +20,9 @@ public final class FilmItemAttributes {
     public static void register() {
         if (registered) return;
         Registry.register(CreateBuiltInRegistries.ITEM_ATTRIBUTE_TYPE,
-                ResourceLocation.fromNamespaceAndPath(CreateCinema.MODID, "film_completed"), COMPLETED);
+                new ResourceLocation(CreateCinema.MODID, "film_completed"), COMPLETED);
         Registry.register(CreateBuiltInRegistries.ITEM_ATTRIBUTE_TYPE,
-                ResourceLocation.fromNamespaceAndPath(CreateCinema.MODID, "film_uncompleted"), UNCOMPLETED);
+                new ResourceLocation(CreateCinema.MODID, "film_uncompleted"), UNCOMPLETED);
         registered = true;
     }
 

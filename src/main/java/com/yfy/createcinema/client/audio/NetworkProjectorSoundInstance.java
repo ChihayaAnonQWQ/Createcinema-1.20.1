@@ -77,7 +77,7 @@ public class NetworkProjectorSoundInstance extends AbstractSoundInstance impleme
         volume = projector.getLevel() == null ? 0.0f : SpeakerBlock.redstoneVolume(projector.getLevel(), this.anchor);
         pitch = playbackRate(projector, sourceMedia);
         attenuation = SoundInstance.Attenuation.LINEAR;
-        sound = new Sound(location, ConstantFloat.of(1.0f), ConstantFloat.of(1.0f), 1,
+        sound = new Sound(location.toString(), ConstantFloat.of(1.0f), ConstantFloat.of(1.0f), 1,
                 Sound.Type.FILE, true, false, ClientConfig.speakerAttenuationDistance());
     }
 
@@ -237,7 +237,9 @@ public class NetworkProjectorSoundInstance extends AbstractSoundInstance impleme
     }
 
     public void onChannelStarted(SoundEngine engine, Channel channel) {
-        ChannelAccess.ChannelHandle handle = engine.instanceToChannel.get(this);
+        Object resolved = instanceToChannel(engine).get(this);
+        ChannelAccess.ChannelHandle handle = resolved instanceof ChannelAccess.ChannelHandle resolvedHandle
+                ? resolvedHandle : null;
         channelHandle = handle;
         if (stopped) {
             if (handle != null) handle.execute(Channel::stop);
@@ -250,6 +252,50 @@ public class NetworkProjectorSoundInstance extends AbstractSoundInstance impleme
         channelStarted = true;
         CreateCinema.LOGGER.debug("Started network audio {} at {}s", url,
                 String.format(java.util.Locale.ROOT, "%.3f", streamStartTime));
+    }
+
+    /**
+     * 1.20.1 {@code SoundEngine#instanceToChannel} is private (the access transformer is not applied at compile time),
+     * so the channel lookup map is read reflectively. The field is matched by name in development and by its declared
+     * {@code Map<SoundInstance, ChannelAccess.ChannelHandle>} signature when the runtime field name is remapped.
+     */
+    private static java.lang.reflect.Field instanceToChannelField;
+
+    @SuppressWarnings("unchecked")
+    private static java.util.Map<Object, Object> instanceToChannel(SoundEngine engine) {
+        java.lang.reflect.Field field = instanceToChannelField;
+        if (field == null) {
+            field = findInstanceToChannelField();
+            if (field == null) return java.util.Map.of();
+            instanceToChannelField = field;
+        }
+        try {
+            return (java.util.Map<Object, Object>) field.get(engine);
+        } catch (IllegalAccessException e) {
+            CreateCinema.LOGGER.warn("Failed to access SoundEngine#instanceToChannel", e);
+            return java.util.Map.of();
+        }
+    }
+
+    private static java.lang.reflect.Field findInstanceToChannelField() {
+        for (java.lang.reflect.Field field : SoundEngine.class.getDeclaredFields()) {
+            if (!java.util.Map.class.isAssignableFrom(field.getType())) continue;
+            if ("instanceToChannel".equals(field.getName())) {
+                field.setAccessible(true);
+                return field;
+            }
+        }
+        for (java.lang.reflect.Field field : SoundEngine.class.getDeclaredFields()) {
+            if (!java.util.Map.class.isAssignableFrom(field.getType())) continue;
+            if (!(field.getGenericType() instanceof java.lang.reflect.ParameterizedType parameterized)) continue;
+            java.lang.reflect.Type[] arguments = parameterized.getActualTypeArguments();
+            if (arguments.length == 2 && arguments[1] == ChannelAccess.ChannelHandle.class) {
+                field.setAccessible(true);
+                return field;
+            }
+        }
+        CreateCinema.LOGGER.warn("Failed to access SoundEngine#instanceToChannel");
+        return null;
     }
 
     private void updatePosition() {
@@ -279,7 +325,7 @@ public class NetworkProjectorSoundInstance extends AbstractSoundInstance impleme
     }
 
     private static ResourceLocation soundLocation(BlockPos projector, String clusterId) {
-        return ResourceLocation.fromNamespaceAndPath(CreateCinema.MODID,
+        return new ResourceLocation(CreateCinema.MODID,
                 "network_audio/" + Long.toUnsignedString(projector.asLong()) + "/" + clusterId);
     }
 

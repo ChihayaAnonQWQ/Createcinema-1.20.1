@@ -98,6 +98,7 @@
   "gui.createcinema.playlist.detected": "%s entries detected · Playing %s/%s",
   "gui.createcinema.stream.error": "Failed to load; check the URL or network",
   "gui.createcinema.stream.error_short": "Failed to load",
+  "gui.createcinema.stream.error.ffmpeg": "The embedded FFmpeg decoder failed to load. Restart the game; if it persists, exclude the game folder from antivirus real-time scanning",
   "gui.createcinema.stream.error.queue_full": "Network stream queue is full",
   "gui.createcinema.stream.error.unsupported_iqiyi": "iQiyi needs the web player/login/DRM",
   "gui.createcinema.stream.error.unsupported_web": "This site needs a web player",

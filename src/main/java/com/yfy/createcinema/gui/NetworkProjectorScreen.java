@@ -86,7 +86,7 @@ public class NetworkProjectorScreen extends AbstractContainerScreen<NetworkProje
             graphics.drawCenteredString(font, playlist, 126, 112, 0x8FC7B5);
     }
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(graphics, mouseX, mouseY, partialTick); super.render(graphics, mouseX, mouseY, partialTick); renderTooltip(graphics, mouseX, mouseY);
+        renderBackground(graphics); super.render(graphics, mouseX, mouseY, partialTick); renderTooltip(graphics, mouseX, mouseY);
     }
     private void drawSlot(GuiGraphics graphics, int x, int y) {
         graphics.fill(x, y, x + 18, y + 18, 0xFF151719);

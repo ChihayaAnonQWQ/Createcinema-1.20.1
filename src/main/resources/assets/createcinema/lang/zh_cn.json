@@ -98,6 +98,7 @@
   "gui.createcinema.playlist.detected": "检测到 %s 项 · 正在播放 %s/%s",
   "gui.createcinema.stream.error": "加载失败，请检查网址或网络",
   "gui.createcinema.stream.error_short": "加载失败",
+  "gui.createcinema.stream.error.ffmpeg": "视频解码库(FFmpeg)加载失败：请重启游戏；若仍失败，请把杀毒软件对该游戏目录的实时扫描关闭后重试",
   "gui.createcinema.stream.error.queue_full": "网络播放队列已满",
   "gui.createcinema.stream.error.unsupported_iqiyi": "爱奇艺需要登录/DRM",
   "gui.createcinema.stream.error.unsupported_web": "网站未暴露m3u8，无法获取视频流",

@@ -32,7 +32,7 @@ public final class DouyinAuthenticatedApi {
         detail = object(data, "aweme_detail");
         if (detail != null) return detail;
         List<JsonObject> candidates = items(response);
-        if (!candidates.isEmpty()) return candidates.getFirst();
+        if (!candidates.isEmpty()) return candidates.get(0);
         throw new IOException("Douyin browser detail response has no playable video");
     }
 

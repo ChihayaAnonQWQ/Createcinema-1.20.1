@@ -13,7 +13,6 @@ import com.yfy.createcinema.PlaybackSpeeds;
 import com.yfy.createcinema.gui.NetworkProjectorMenu;
 import com.yfy.createcinema.item.RemoteControlUpgradeItem;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -26,7 +25,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.items.ItemStackHandler;
+import net.minecraftforge.items.ItemStackHandler;
 
 import java.util.HashMap;
 import java.util.List;
@@ -227,7 +226,7 @@ public class NetworkProjectorBlockEntity extends KineticBlockEntity implements C
             }
             ServerPlayer player = level.getServer().getPlayerList().getPlayer(entry.getKey());
             if (!isFresh || player == null || player.hasDisconnected()
-                    || player.connection.latency() >= DEGRADED_LATENCY_MILLIS) {
+                    || player.latency >= DEGRADED_LATENCY_MILLIS) {
                 degradedConnections++;
             }
         }
@@ -387,7 +386,7 @@ public class NetworkProjectorBlockEntity extends KineticBlockEntity implements C
     private void updateRemoteLinks() {
         boolean enabled = hasContinuousPlayUpgrade() && hasRemoteControlUpgrade();
         ItemStack remote = upgrades.get(1);
-        if (enabled == appliedRemoteEnabled && ItemStack.isSameItemSameComponents(remote, appliedRemoteUpgrade)) return;
+        if (enabled == appliedRemoteEnabled && ItemStack.isSameItemSameTags(remote, appliedRemoteUpgrade)) return;
 
         ItemStackHandler frequencies = enabled ? RemoteControlUpgradeItem.getFrequencyItems(remote) : new ItemStackHandler(4);
         applyingRemoteFrequencies = true;
@@ -608,12 +607,12 @@ public class NetworkProjectorBlockEntity extends KineticBlockEntity implements C
     }
 
     @Override
-    protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        super.write(tag, registries, clientPacket);
+    protected void write(CompoundTag tag, boolean clientPacket) {
+        super.write(tag, clientPacket);
         tag.putString("Url", url);
         tag.putInt("Quality", quality.id());
-        if (!upgrades.get(0).isEmpty()) tag.put("Upgrade0", upgrades.get(0).saveOptional(registries));
-        if (!upgrades.get(1).isEmpty()) tag.put("Upgrade1", upgrades.get(1).saveOptional(registries));
+        if (!upgrades.get(0).isEmpty()) tag.put("Upgrade0", upgrades.get(0).save(new CompoundTag()));
+        if (!upgrades.get(1).isEmpty()) tag.put("Upgrade1", upgrades.get(1).save(new CompoundTag()));
         tag.putInt("NavigationRevision", navigationRevision);
         tag.putInt("NavigationDirection", navigationDirection);
         tag.putInt("NavigationOffset", navigationOffset);
@@ -637,14 +636,13 @@ public class NetworkProjectorBlockEntity extends KineticBlockEntity implements C
     }
 
     @Override
-    protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        super.read(tag, registries, clientPacket);
+    protected void read(CompoundTag tag, boolean clientPacket) {
+        super.read(tag, clientPacket);
         url = tag.getString("Url");
         quality = NetworkVideoQuality.byId(tag.contains("Quality") ? tag.getInt("Quality") : NetworkVideoQuality.HIGH.id());
         CompoundTag continuousTag = tag.contains("Upgrade0") ? tag.getCompound("Upgrade0") : tag.getCompound("Upgrade");
-        upgrades.set(0, ItemStack.parseOptional(registries, continuousTag));
-        upgrades.set(1, tag.contains("Upgrade1")
-                ? ItemStack.parseOptional(registries, tag.getCompound("Upgrade1")) : ItemStack.EMPTY);
+        upgrades.set(0, ItemStack.of(continuousTag));
+        upgrades.set(1, tag.contains("Upgrade1") ? ItemStack.of(tag.getCompound("Upgrade1")) : ItemStack.EMPTY);
         if (!hasContinuousPlayUpgrade()) upgrades.set(0, ItemStack.EMPTY);
         if (!hasRemoteControlUpgrade()) upgrades.set(1, ItemStack.EMPTY);
         navigationRevision = tag.getInt("NavigationRevision");
@@ -754,15 +752,15 @@ public class NetworkProjectorBlockEntity extends KineticBlockEntity implements C
         }
 
         @Override
-        public void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
+        public void write(CompoundTag tag, boolean clientPacket) {
             CompoundTag nested = new CompoundTag();
-            link.write(nested, registries, clientPacket);
+            link.write(nested, clientPacket);
             tag.put("NextLink", nested);
         }
 
         @Override
-        public void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-            if (tag.contains("NextLink")) link.read(tag.getCompound("NextLink"), registries, clientPacket);
+        public void read(CompoundTag tag, boolean clientPacket) {
+            if (tag.contains("NextLink")) link.read(tag.getCompound("NextLink"), clientPacket);
         }
     }
 }
