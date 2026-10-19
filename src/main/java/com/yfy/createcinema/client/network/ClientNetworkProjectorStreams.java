@@ -1,5 +1,6 @@
 package com.yfy.createcinema.client.network;
 
+import com.yfy.createcinema.ClientConfig;
 import com.yfy.createcinema.client.video.VideoResolverHttp;
 import com.yfy.createcinema.client.render.NetworkProjectionFrame;
 import com.yfy.createcinema.client.video.IqiyiVideoResolver;
@@ -1450,9 +1451,11 @@ public final class ClientNetworkProjectorStreams {
         grabber.setOption("reconnect_on_network_error", "1");
         grabber.setOption("reconnect_delay_max", "2");
         grabber.setOption("reconnect_max_retries", "2");
-        // Single-threaded decoding: FFmpeg's frame-threaded decoders keep per-thread reference lists, and the bundled
-        // 6.1.1 build has been observed to take a native access violation inside avcodec while streaming with them.
-        grabber.setOption("threads", "1");
+        // FFmpeg frame threading can take a native access violation inside avcodec on some H.264 streams and kill the
+        // JVM without a crash report, so the safe default is single threaded. Configurable via
+        // client config "projector.decodeThreads" (0 = let FFmpeg decide).
+        int decodeThreads = ClientConfig.projectorDecodeThreads();
+        grabber.setOption("threads", String.valueOf(Math.max(0, Math.min(16, decodeThreads))));
     }
 
     private static class NativeFrameScaler implements AutoCloseable {

@@ -19,6 +19,7 @@ public final class ClientConfig {
     private static final ForgeConfigSpec.BooleanValue BURN_HARDWARE_DECODING;
     private static final ForgeConfigSpec.BooleanValue BURN_HARDWARE_ENCODING;
     private static final ForgeConfigSpec.BooleanValue PROJECTOR_HARDWARE_DECODING;
+    private static final ForgeConfigSpec.IntValue PROJECTOR_DECODE_THREADS;
     private static final ForgeConfigSpec.ConfigValue<String> BILIBILI_SESSDATA;
     private static final ForgeConfigSpec.ConfigValue<String> BILIBILI_BILL_JCT;
     private static final ForgeConfigSpec.ConfigValue<String> BILIBILI_BUVID3;
@@ -68,6 +69,14 @@ public final class ClientConfig {
         PROJECTOR_HARDWARE_DECODING = builder
                 .comment("Try a platform hardware decoder for H.264 film playback, then fall back to FFmpeg software decoding.")
                 .define("hardwareDecoding", true);
+        PROJECTOR_DECODE_THREADS = builder
+                .comment("FFmpeg decode threads used for network projector playback.",
+                        "1 = single threaded. This is the safe default: the bundled FFmpeg 6.1.1 can crash with a",
+                        "native access violation (0xC0000005 inside avcodec) on some H.264 streams when frame",
+                        "threading is enabled, killing the game without a Java crash report.",
+                        "0 = let FFmpeg pick automatically. Values above 1 may help with 4K/8K sources but can",
+                        "bring that crash back, so only raise it if you know your sources are fine.")
+                .defineInRange("decodeThreads", 1, 0, 16);
         builder.pop();
         builder.push("burner");
         BURN_CACHE_ENABLED = builder
@@ -191,6 +200,36 @@ public final class ClientConfig {
 
     public static boolean projectorHardwareDecoding() {
         return PROJECTOR_HARDWARE_DECODING.get();
+    }
+
+    public static void setProjectorHardwareDecoding(boolean enabled) {
+        PROJECTOR_HARDWARE_DECODING.set(enabled);
+        PROJECTOR_HARDWARE_DECODING.save();
+    }
+
+    /** FFmpeg decode threads for network projector playback: 1 = single threaded (safe default), 0 = automatic. */
+    public static int projectorDecodeThreads() {
+        return PROJECTOR_DECODE_THREADS.get();
+    }
+
+    public static void setProjectorDecodeThreads(int threads) {
+        PROJECTOR_DECODE_THREADS.set(Math.max(0, Math.min(16, threads)));
+        PROJECTOR_DECODE_THREADS.save();
+    }
+
+    public static void setBurnCacheEnabled(boolean enabled) {
+        BURN_CACHE_ENABLED.set(enabled);
+        BURN_CACHE_ENABLED.save();
+    }
+
+    public static void setBurnHardwareDecoding(boolean enabled) {
+        BURN_HARDWARE_DECODING.set(enabled);
+        BURN_HARDWARE_DECODING.save();
+    }
+
+    public static void setBurnHardwareEncoding(boolean enabled) {
+        BURN_HARDWARE_ENCODING.set(enabled);
+        BURN_HARDWARE_ENCODING.save();
     }
 
     public static boolean burnCacheEnabled() {

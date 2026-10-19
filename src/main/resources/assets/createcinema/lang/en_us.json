@@ -211,5 +211,20 @@
   "createcinema.ponder.network_audio.text_3": "Connect speakers to the Network Projector using cables. The speaker position will play spatial audio.",
   "createcinema.ponder.network_audio.text_4": "Hold an Andesite or Brass casing and right‑click a cable to encase it; adjacent casings will automatically merge into a single continuous shell.",
   "createcinema.ponder.network_audio.text_5": "Speaker volume is linearly controlled by redstone power from 0 to 15. 0 is mute, 15 is maximum volume.",
-  "createcinema.ponder.network_audio.text_6": "With the Continuous Play Upgrade installed, it will detect episode playlists or series directories and play them sequentially to the last item."
+  "createcinema.ponder.network_audio.text_6": "With the Continuous Play Upgrade installed, it will detect episode playlists or series directories and play them sequentially to the last item.",
+  "config.createcinema.title": "Create Cinema",
+  "config.createcinema.category.playback": "Playback",
+  "config.createcinema.category.burning": "Burning",
+  "config.createcinema.decodeThreads": "Network decode threads",
+  "config.createcinema.decodeThreads.auto": "Automatic",
+  "config.createcinema.decodeThreads.value": "%s threads",
+  "config.createcinema.decodeThreads.tooltip": "FFmpeg decode threads for network playback. 1 = single threaded (safe default): the bundled FFmpeg 6.1.1 can hit a native avcodec crash on some H.264 streams when frame threading is enabled, which kills the game without a Java crash report. 0 = let FFmpeg decide. Values above 1 may help with 4K/8K sources but can bring that crash back; only raise it for sources you know are fine. Applies to the next playback.",
+  "config.createcinema.projectorHardwareDecoding": "Projector hardware decoding",
+  "config.createcinema.projectorHardwareDecoding.tooltip": "Try a platform hardware decoder (NVDEC / VideoToolbox, ...) for film playback, then fall back to FFmpeg software decoding.",
+  "config.createcinema.burnHardwareDecoding": "Burning hardware decoding",
+  "config.createcinema.burnHardwareDecoding.tooltip": "Try a hardware video decoder while burning, then fall back to software decoding.",
+  "config.createcinema.burnHardwareEncoding": "Burning hardware encoding",
+  "config.createcinema.burnHardwareEncoding.tooltip": "Try a hardware H.264 encoder while burning, then fall back to software encoding.",
+  "config.createcinema.burnCacheEnabled": "Reuse burn cache",
+  "config.createcinema.burnCacheEnabled.tooltip": "Reuse already encoded frames and audio when burning the same source and quality again."
 }

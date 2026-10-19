@@ -211,5 +211,20 @@
   "createcinema.ponder.network_audio.text_3": "用线缆连接音箱到网络放映机。音箱所在位置会播放空间音频。",
   "createcinema.ponder.network_audio.text_4": "手持安山岩或黄铜机壳右键线缆即可套上机壳，相邻机壳会自动融合成一整段外壳。",
   "createcinema.ponder.network_audio.text_5": "音箱音量由红石强度 0 到 15 线性控制。0 是静音，15 是最大音量。",
-  "createcinema.ponder.network_audio.text_6": "装入连播升级后，可识别分 P 或剧集目录，并依次播放到最后一项。"
+  "createcinema.ponder.network_audio.text_6": "装入连播升级后，可识别分 P 或剧集目录，并依次播放到最后一项。",
+  "config.createcinema.title": "机械动力：影院",
+  "config.createcinema.category.playback": "播放",
+  "config.createcinema.category.burning": "烧录",
+  "config.createcinema.decodeThreads": "网络播放解码线程",
+  "config.createcinema.decodeThreads.auto": "自动",
+  "config.createcinema.decodeThreads.value": "%s 线程",
+  "config.createcinema.decodeThreads.tooltip": "FFmpeg 解码线程数。1 = 单线程（安全默认值）：内置 FFmpeg 6.1.1 在某些 H.264 流上开启帧级多线程会触发 avcodec 原生崩溃，导致游戏直接退出且没有 Java 崩溃报告。0 = 交给 FFmpeg 自动决定。大于 1 可能改善 4K/8K 播放，但也可能把该崩溃带回来，仅在你确认片源没问题时调高。修改后对下一次播放生效。",
+  "config.createcinema.projectorHardwareDecoding": "放映机硬件解码",
+  "config.createcinema.projectorHardwareDecoding.tooltip": "播放影片时优先尝试平台硬件解码器（NVDEC / VideoToolbox 等），失败时回退到 FFmpeg 软件解码。",
+  "config.createcinema.burnHardwareDecoding": "烧录硬件解码",
+  "config.createcinema.burnHardwareDecoding.tooltip": "烧录时优先尝试硬件视频解码器，失败则回退到软件解码。",
+  "config.createcinema.burnHardwareEncoding": "烧录硬件编码",
+  "config.createcinema.burnHardwareEncoding.tooltip": "烧录时优先尝试 H.264 硬件编码器，失败则回退到软件编码。",
+  "config.createcinema.burnCacheEnabled": "复用烧录缓存",
+  "config.createcinema.burnCacheEnabled.tooltip": "相同片源与清晰度再次烧录时，复用已编码的帧与音频，节省时间。"
 }

@@ -48,7 +48,17 @@ public class CreateCinema {
         if (FMLEnvironment.dist == Dist.CLIENT) {
             CreateCinemaPonderPlugin.register();
             CableCasingCTRegistration.register();
+            registerConfigScreen();
         }
+    }
+
+    /** Offers an in-game config screen through Forge when Cloth Config is installed; otherwise the TOML is used. */
+    private void registerConfigScreen() {
+        if (!net.minecraftforge.fml.ModList.get().isLoaded("cloth_config")) return;
+        net.minecraftforge.fml.ModLoadingContext.get().registerExtensionPoint(
+                net.minecraftforge.client.ConfigScreenHandler.ConfigScreenFactory.class,
+                () -> new net.minecraftforge.client.ConfigScreenHandler.ConfigScreenFactory(
+                        (minecraft, parent) -> com.yfy.createcinema.client.config.CinemaConfigScreen.create(parent)));
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
