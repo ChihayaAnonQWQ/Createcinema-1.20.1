@@ -48,6 +48,10 @@ public class NetworkFfmpegAudioStream implements AudioStream {
     private final ArrayBlockingQueue<ByteBuffer> decoded = new ArrayBlockingQueue<>(MAX_BUFFERED_PCM_CHUNKS);
     private final AtomicInteger bufferedBytes = new AtomicInteger();
     private final AtomicBoolean resourcesClosed = new AtomicBoolean();
+    private final AtomicBoolean nativeClosed = new AtomicBoolean();
+    /** Guards every native FFmpeg call: the decoder thread grabs, the close thread must never free underneath it. */
+    private final java.util.concurrent.locks.ReentrantLock grabberLock =
+            new java.util.concurrent.locks.ReentrantLock();
     private final Thread decoderThread;
 
     private ByteBuffer pending = ByteBuffer.allocate(0);
@@ -247,20 +251,25 @@ public class NetworkFfmpegAudioStream implements AudioStream {
     }
 
     private Frame grabSamples() throws Exception {
-        Frame frame;
-        while (!closed && (frame = grabber.grabSamples()) != null) {
-            if (frame.samples != null && frame.samples.length > 0 && trimDiscardedSamples(frame)) return frame;
-        }
-        if (!closed && !live) {
-            try {
-                grabber.setTimestamp(0);
-                while (!closed && (frame = grabber.grabSamples()) != null) {
-                    if (frame.samples != null && frame.samples.length > 0 && trimDiscardedSamples(frame)) return frame;
-                }
-            } catch (Exception ignored) {
+        grabberLock.lock();
+        try {
+            Frame frame;
+            while (!closed && (frame = grabber.grabSamples()) != null) {
+                if (frame.samples != null && frame.samples.length > 0 && trimDiscardedSamples(frame)) return frame;
             }
+            if (!closed && !live) {
+                try {
+                    grabber.setTimestamp(0);
+                    while (!closed && (frame = grabber.grabSamples()) != null) {
+                        if (frame.samples != null && frame.samples.length > 0 && trimDiscardedSamples(frame)) return frame;
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+            return null;
+        } finally {
+            grabberLock.unlock();
         }
-        return null;
     }
 
     private boolean trimDiscardedSamples(Frame frame) {
@@ -331,19 +340,57 @@ public class NetworkFfmpegAudioStream implements AudioStream {
 
     private void closeResources() {
         if (!resourcesClosed.compareAndSet(false, true)) return;
-        CLOSE_EXECUTOR.execute(() -> {
-            try {
-                grabber.close();
-            } catch (Exception ignored) {
-            }
-            if (input != null) {
+        CLOSE_EXECUTOR.execute(this::closeNativeSafely);
+    }
+
+    /**
+     * FFmpeg contexts are not thread safe: closing one while the decoder thread is still inside
+     * {@code avcodec_receive_frame()} is a use-after-free inside avcodec (native access violation, the JVM dies with
+     * no crash report). Only close once the decoder released the grabber lock; if it is blocked on a network read,
+     * wait for it on a separate thread instead of closing underneath it.
+     */
+    private void closeNativeSafely() {
+        boolean locked;
+        try {
+            locked = grabberLock.tryLock(3L, TimeUnit.SECONDS);
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            locked = false;
+        }
+        if (!locked) {
+            CreateCinema.LOGGER.debug("Audio decoder still busy; deferring native close until it returns");
+            Thread waiter = new Thread(() -> {
+                grabberLock.lock();
                 try {
-                    input.close();
-                } catch (IOException ignored) {
+                    closeNativeResources();
+                } finally {
+                    grabberLock.unlock();
                 }
+            }, "CreateCinema Network Audio Close Wait");
+            waiter.setDaemon(true);
+            waiter.start();
+            return;
+        }
+        try {
+            closeNativeResources();
+        } finally {
+            grabberLock.unlock();
+        }
+    }
+
+    private void closeNativeResources() {
+        if (!nativeClosed.compareAndSet(false, true)) return;
+        try {
+            grabber.close();
+        } catch (Exception ignored) {
+        }
+        if (input != null) {
+            try {
+                input.close();
+            } catch (IOException ignored) {
             }
-            CreateCinema.LOGGER.debug("Closed {} network audio stream", live ? "live" : "video");
-        });
+        }
+        CreateCinema.LOGGER.debug("Closed {} network audio stream", live ? "live" : "video");
     }
 
     private static double wrap(double value, double duration) {

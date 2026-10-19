@@ -20,8 +20,10 @@ import java.nio.file.Path;
 public class LocalFfmpegAudioStream implements AudioStream {
     private final FFmpegFrameGrabber grabber;
     private final AudioFormat format;
+    /** Guards every native FFmpeg call: read() grabs, close() must never free the context underneath it. */
+    private final Object grabberLock = new Object();
     private ByteBuffer pending = ByteBuffer.allocate(0);
-    private boolean closed;
+    private volatile boolean closed;
 
     public LocalFfmpegAudioStream(Path source, double startSeconds) throws IOException {
         try {
@@ -69,16 +71,18 @@ public class LocalFfmpegAudioStream implements AudioStream {
     }
 
     private Frame nextSamples() throws Exception {
-        Frame frame;
-        while (!closed && (frame = grabber.grabSamples()) != null) {
-            if (frame.samples != null && frame.samples.length > 0) return frame;
+        synchronized (grabberLock) {
+            Frame frame;
+            while (!closed && (frame = grabber.grabSamples()) != null) {
+                if (frame.samples != null && frame.samples.length > 0) return frame;
+            }
+            if (closed) return null;
+            grabber.setTimestamp(0L);
+            while (!closed && (frame = grabber.grabSamples()) != null) {
+                if (frame.samples != null && frame.samples.length > 0) return frame;
+            }
+            return null;
         }
-        if (closed) return null;
-        grabber.setTimestamp(0L);
-        while (!closed && (frame = grabber.grabSamples()) != null) {
-            if (frame.samples != null && frame.samples.length > 0) return frame;
-        }
-        return null;
     }
 
     private static ByteBuffer convert(Frame frame, int channels) {
@@ -110,9 +114,13 @@ public class LocalFfmpegAudioStream implements AudioStream {
     public void close() {
         if (closed) return;
         closed = true;
-        try {
-            grabber.close();
-        } catch (Exception ignored) {
+        // Never free the FFmpeg context while read() is inside it: a concurrent close is a native use-after-free
+        // inside avcodec, which kills the JVM without a Java crash report.
+        synchronized (grabberLock) {
+            try {
+                grabber.close();
+            } catch (Exception ignored) {
+            }
         }
     }
 }
