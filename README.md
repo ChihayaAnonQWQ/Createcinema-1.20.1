@@ -14,10 +14,10 @@
 
 | 文件 | 体积 | 适用平台 |
 |---|---|---|
-| `createcinema-0.1.4-1.20.1-fix4.jar` | 57 MB | Windows x86_64 ✅ 已实机验证 |
-| `createcinema-0.1.4-1.20.1-fix4-macos.jar` | 71 MB | macOS（Apple Silicon + Intel 双架构） |
-| `createcinema-0.1.4-1.20.1-fix4-linux.jar` | 78 MB | Linux（x86_64 + arm64 双架构） |
-| `createcinema-0.1.4-1.20.1-fix4-android-arm64.jar` | 51 MB | Android（PojavLauncher / FCL，arm64） |
+| `createcinema-0.1.4-1.20.1-fix5.jar` | 57 MB | Windows x86_64 ✅ 已实机验证 |
+| `createcinema-0.1.4-1.20.1-fix5-macos.jar` | 71 MB | macOS（Apple Silicon + Intel 双架构） |
+| `createcinema-0.1.4-1.20.1-fix5-linux.jar` | 78 MB | Linux（x86_64 + arm64 双架构） |
+| `createcinema-0.1.4-1.20.1-fix5-android-arm64.jar` | 51 MB | Android（PojavLauncher / FCL，arm64） |
 
 jar 内已内联 FFmpeg/JavaCV 原生库、jsoup、POI（PPT 渲染器）与 Android WebView 桥，**无需额外安装**。
 
@@ -54,6 +54,7 @@ jar 内已内联 FFmpeg/JavaCV 原生库、jsoup、POI（PPT 渲染器）与 And
 
 | 构建 | 内容 |
 |---|---|
+| `fix5` | **修复原生崩溃（0xC0000005）**：崩溃落在 `avcodec-60.dll` 固定的 `h264` 参考帧列表代码上，属 FFmpeg 6.1.1 **帧级多线程解码**路径。现在网络播放统一 `threads=1`（单线程解码），同一 1080p 视频复测不再崩溃；同时新增「Opened network video stream」与「Hard resync seek」诊断日志。 |
 | `fix4` | **修复原生崩溃**：`avcodec-60.dll` 访问违例（0xC0000005）。音频流关闭时，解码线程可能仍停留在 `avcodec_receive_frame()` 内部，异步 `close()` 会造成 use-after-free。现在所有原生 FFmpeg 调用串行化，关闭会等解码线程释放锁，必要时延后关闭。上游 1.21.1 同样存在此问题。 |
 | `fix3` | 修复 Windows 上 FFmpeg 原生库加载失败：JavaCPP 每次加载都会「删掉缓存 DLL 再重写」，与安全软件（火绒 HIPS 等）实时扫描冲突，失败发生在类初始化里会废掉整局解码。改为每进程独立缓存目录 + 自行解压 + `pathsFirst` 直接加载文件。 |
 | `fix1` / `fix2` | 早期诊断版本，已废弃，请勿使用。 |

@@ -697,12 +697,12 @@ public final class ClientNetworkProjectorStreams {
                     }
                     grabber.start();
                     if (closed) return;
-                    if (source.live()) {
-                        CreateCinema.LOGGER.info(
-                                "Opened live video stream: format={} videoCodec={} {}x{} audioCodec={}",
-                                grabber.getFormat(), grabber.getVideoCodecName(),
-                                grabber.getImageWidth(), grabber.getImageHeight(), grabber.getAudioCodecName());
-                    }
+                    CreateCinema.LOGGER.info(
+                            "Opened network video stream: format={} videoCodec={} {}x{} pixFmt={} fps={} audioCodec={}",
+                            grabber.getFormat(), grabber.getVideoCodecName(),
+                            grabber.getImageWidth(), grabber.getImageHeight(), grabber.getPixelFormat(),
+                            String.format(java.util.Locale.ROOT, "%.2f", grabber.getVideoFrameRate()),
+                            grabber.getAudioCodecName());
                     progress = 0.60f;
                     duration = source.live() ? 0.0 : source.durationSeconds() > 0.0 ? source.durationSeconds()
                             : hls ? HlsStreamCache.duration(source.videoUrl())
@@ -791,6 +791,12 @@ public final class ClientNetworkProjectorStreams {
                             }
                             if (directSeek && duration > 0.0 && drift < -HARD_RESYNC_SECONDS) {
                                 clearBufferedFrames(true);
+                                CreateCinema.LOGGER.info(
+                                        "Hard resync seek for {}: timestamp={}s master={}s drift={}s",
+                                        url,
+                                        String.format(java.util.Locale.ROOT, "%.2f", timestamp),
+                                        String.format(java.util.Locale.ROOT, "%.2f", masterTime),
+                                        String.format(java.util.Locale.ROOT, "%.2f", drift));
                                 grabber.setTimestamp((long) (masterTime * 1_000_000.0));
                                 timestampOrigin = Double.NaN;
                                 timestampTarget = masterTime;
@@ -1444,6 +1450,9 @@ public final class ClientNetworkProjectorStreams {
         grabber.setOption("reconnect_on_network_error", "1");
         grabber.setOption("reconnect_delay_max", "2");
         grabber.setOption("reconnect_max_retries", "2");
+        // Single-threaded decoding: FFmpeg's frame-threaded decoders keep per-thread reference lists, and the bundled
+        // 6.1.1 build has been observed to take a native access violation inside avcodec while streaming with them.
+        grabber.setOption("threads", "1");
     }
 
     private static class NativeFrameScaler implements AutoCloseable {
